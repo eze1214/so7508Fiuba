@@ -2,8 +2,6 @@
 
 GRUPO=~/grupo05
 CONFG="$GRUPO/dirconf/config.cnf"
-GRABITAC="$GRUPO/binarios/GrabarBitacora.sh"
-
 
 escribirConfig () {
 	WHEN=`date +%T-%d-%m-%Y`
@@ -100,9 +98,9 @@ crearDirectorios(){
 }
 
 crearArchivoConfiguracion(){
-if [ ! -f "$CONFG" ]; then
+	if [ ! -f "$CONFG" ]; then
  		escribirConfig
- 	fi
+	fi
 }
 
 
@@ -142,6 +140,3 @@ do
 		instalacion	
 	fi
 done
-
-
-
