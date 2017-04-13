@@ -17,7 +17,7 @@ escribirConfig () {
 	echo "REPORTESDIR=$GRUPO/$REPORTES=$WHO=$WHEN" >> "$CONFG"
 	echo "LOG=$GRUPO/$LOG=$WHO=$WHEN" >> "$CONFG"
 	echo "CONFDIR=$GRUPO/$CONFDIR=$WHO=$WHEN" >> "$CONFG"
-	echo "Archivo de configuracion creado"
+	echo -e "\nArchivo de configuracion creado"
 }
 
 copiarArchivos (){
