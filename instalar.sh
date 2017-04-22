@@ -100,18 +100,47 @@ inicializarVariablesDefecto(){
 	CONFDIR="dirconf"
 }
 
+
+validarDirectorios (){
+	#La idea es comparar todos los elementos del vector y contar cuando hay una igualdad
+	#Este contador debe ser igual a la cantidad de elementos del vector
+	#dado que al compararse todos los elementos con todos se comparan los que son iguales
+	
+	contador=0 #Primer Elemento a comparar
+	directorios1=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS})
+	error=0
+	for directorio1 in ${directorios1[*]}
+	do
+		for directorio2 in ${directorios1[*]}
+		do
+			echo -e "$directorio1 $directorio2 \n" 
+			if [ $directorio1 = $directorio2 ]; then
+				let contador=contador+1
+			fi
+		done
+	done
+	len=${#directorios1[@]}
+	if [ $contador -gt $len ]; then
+		error=1
+	fi
+}
+
 definirDirectorios (){
 	OPCION="n"
 	inicializarVariablesDefecto
-	while [  $OPCION != "s" ]; do
+	while [ $OPCION != "s" ]; do
     	ingresarDirectorios
     	confirmarDirectorios
-    	clear
+    	validarDirectorios
+  		if [ $error = 1 ]; then
+  			OPCION="n"
+  			echo -e "\n Error no se puede ingresar directorios con nombres duplicados"
+  		fi
 	done
 }
 
 confirmarDirectorios(){
-	clear
+	
 	echo -e "A continuación se va a crear la siguiente estructura en el directorio de instalación"
 	echo "Directorio de archivos maestros: $MAESTROS "	
 	echo "Directorio de archivos ejecutables: $EJECUTABLES "	
