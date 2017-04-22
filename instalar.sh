@@ -43,14 +43,16 @@ copiarArchivos (){
 	done
 	echo "-----------------------------------------"
 
-	echo -e "\nCopiando Archivos de Novedades"
-	echo "-----------------------------------------"
-	for archivoNovedades in ${totalArchivosNovedades[*]}
-	do
-		cp "$(pwd)/novedades/$archivoNovedades" "$GRUPO/$NOVEDADES"
-		echo "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES"
-	done
-	echo "-----------------------------------------"
+	if [ ! -f "$CONFG" ]; then 
+		echo -e "\nCopiando Archivos de Novedades"
+		echo "-----------------------------------------"
+		for archivoNovedades in ${totalArchivosNovedades[*]}
+		do
+			cp "$(pwd)/novedades/$archivoNovedades" "$GRUPO/$NOVEDADES"
+			echo "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES"
+		done
+		echo "-----------------------------------------"
+	fi
 }
 
 
@@ -112,8 +114,7 @@ validarDirectorios (){
 	for directorio1 in ${directorios1[*]}
 	do
 		for directorio2 in ${directorios1[*]}
-		do
-			echo -e "$directorio1 $directorio2 \n" 
+		do 
 			if [ $directorio1 = $directorio2 ]; then
 				let contador=contador+1
 			fi
@@ -125,22 +126,35 @@ validarDirectorios (){
 	fi
 }
 
+cargarDirectorios(){
+	#Se cargan los directorios desde el archivo de configuración
+	echo -e "\nSe ha detectado una instalación previa"
+	echo -e "\nSe sobreescribiron los archivos maestros y ejecutables"
+	EJECUTABLES=$(grep '^BINARIOS' "$CONFG" | cut -d '=' -f 2  | cut -d '/' -f 5-)
+    MAESTROS=$(grep '^MAESTROS' "$CONFG" | cut -d '=' -f 2  | cut -d '/' -f 5-)
+    echo -e "Directorio de ejecutables $EJECUTABLES"
+    echo -e "Directorio de maestros $MAESTROS"
+}
+
 definirDirectorios (){
 	OPCION="n"
 	inicializarVariablesDefecto
-	while [ $OPCION != "s" ]; do
-    	ingresarDirectorios
-    	confirmarDirectorios
-    	validarDirectorios
-  		if [ $error = 1 ]; then
-  			OPCION="n"
-  			echo -e "\n Error no se puede ingresar directorios con nombres duplicados"
-  		fi
-	done
+	if [ ! -f "$CONFG" ]; then #Si no existe el archivo de configuracion
+		while [ $OPCION != "s" ]; do
+    		ingresarDirectorios
+    		confirmarDirectorios
+   			validarDirectorios
+   			if [ $error = 1 ]; then
+  				OPCION="n"
+  				echo -e "\n Error no se puede ingresar directorios con nombres duplicados"
+  			fi
+		done
+	else
+		cargarDirectorios
+	fi
 }
 
-confirmarDirectorios(){
-	
+confirmarDirectorios(){	
 	echo -e "A continuación se va a crear la siguiente estructura en el directorio de instalación"
 	echo "Directorio de archivos maestros: $MAESTROS "	
 	echo "Directorio de archivos ejecutables: $EJECUTABLES "	
@@ -156,7 +170,7 @@ confirmarDirectorios(){
 
 crearDirectorios(){
 	directorios=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS})
-	clear
+
 	echo -e "\nCreando Estructuras de directorio.." 
     echo "-----------------------------------------"
 	for directorio in ${directorios[*]}
@@ -169,17 +183,27 @@ crearDirectorios(){
 
 crearArchivoConfiguracion()
 {
-	if [ ! -f "$CONFG" ]; then
+	if [ $HAYINSTALACION = "false" ]; then
  		escribirConfig
 	fi
 }
 
+detectarInstalacion(){
+ if [ -f "$CONFG" ]; then
+ 	HAYINSTALACION="true"
+ else 
+ 	HAYINSTALACION="false"
+ fi
+}
+
 instalacion (){
-	definirDirectorios
-	crearDirectorios
-	crearArchivoConfiguracion
-	copiarArchivos
-	echo "Fin instalacion"
+		detectarInstalacion
+		definirDirectorios
+		crearDirectorios
+		copiarArchivos
+		crearArchivoConfiguracion
+		echo "Fin de instalacion"
+	
 }
 
 versionPerl(){
