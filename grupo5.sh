@@ -1,66 +1,61 @@
 #!/bin/bash
 #
-# TODO: Setear variables PATH y de los archivos según archivo de configuración
+
 clear
-echo -e "\nTrabajo Práctico Sistemas operativos Grupo 5\n"
+echo -e "=============================================="
+echo -e " Trabajo Práctico Sistemas operativos Grupo 5"
+echo -e "==============================================\n"
 
 # Echo defino el archivo de configuración 
-CONFIG="$PWD/dirconf/config.cnf"
+CONFDIR="$PWD/dirconf/config.cnf"
 
 # Comprobar existencia de archivo configuración
 valConfigFile () {
-    if [ ! -f $CONFIG ]; then
-        echo "Error al encontrar archivo de configuración en $CONFIG"
+    if [ ! -f $CONFDIR ]; then
+        echo "Error al encontrar archivo de configuración en $CONFDIR" >&2
         exit 1
     fi
-    echo -e "Archivo de configuración cargado"
 }
 
+#Exporta todas las variables obtenidas del archivo de configuración
+exportVariables(){
+    # Utilizo lo generado en global.sh porque es mucho más claro y mejor
+    export GRUPO=`grep -A 0 GRUPO $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export BINARIOS=`grep -A 0 BINARIOS $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export MAESTROS=`grep -A 0 MAESTROS $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export NOVEDADES=`grep -A 0 NOVEDADES $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export ACEPTADOS=`grep -A 0 ACEPTADOS $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export RECHAZADOS=`grep -A 0 RECHAZADOS $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export VALIDADOSDIR=`grep -A 0 VALIDADOSDIR $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export REPORTESDIR=`grep -A 0 REPORTESDIR $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+    export LOG=`grep -A 0 LOG $CONFDIR | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
 
-# Setear Variables de ambiente 
-exportVariable(){
-    LINE=$1
-    echo "LINE : $LINE"
-    NAME=$( echo $LINE | cut -d "=" -f 1 )
-    echo "NAME: ${NAME}"
-    PATH=$( echo "$LINE" | cut -d "=" -f 2 )
-    echo " Cargando Name: $NAME  Path: $PATH "
-    export ${NAME}=${PATH}
-}
-
-#
-#validVariables() {
-#    minVars=(GRUPO BINARIOS MAESTROS ACEPTADOS RECHAZADOS VALIDADOS VALIDADOSDIR REPORTESDIR LOG)
-#    vars=("${!1}")
-#    echo ${vars[@]} 
-#    res=${minVars[@]/${vars[@]}}
-#    echo "${vars[@]} -> Esto es lo que queda $res"
-#}
-
-setVariables(){
-    local lines=$( cat $CONFIG )
-    
-    for LINE in $lines; do 
-        NAME=$( echo $LINE | cut -d"=" -f 1 )
-        PATH_NAME=$( echo $LINE | cut -d"=" -f 2 )
-        echo " Cargando Name: $NAME  Path: $PATH_NAME "
-        export ${NAME}=${PATH}
-    done
+    if [ -z $GRUPO ] || [ -z $BINARIOS ] || [ -z $MAESTROS ] \
+      || [ -z $NOVEDADES ] || [ -z $ACEPTADOS ] || [ -z $RECHAZADOS ] \
+      || [ -z $VALIDADOSDIR ] || [ -z $REPORTESDIR ] || [ -z $LOG ]; then 
+        echo -e "Error! variables globales inexistentes" >&2
+        exit 2
+    fi    
 }
             
 
 startDaemon(){
-    echo -e "This daemon is running.."
+    echo -e "TODO: Agregar inicio demonio "
 }
+
+
 
 showHelp(){
     echo -e "Uso: sisop [OPCION..] \n
                 -d          iniciar el demonio en forma automática"
 }
 
-initSistema(){
+
+
+default(){
+    echo -e "\n====== "
+    read -p "Desea iniciar el demonio ahora?[S/N]: " rp
     
-    read -p "Desea iniciar el demonio ahora?(S/N): " rp
     while [ $rp != "s" ] && [ $rp != "S" ] && [ $rp != "n" ] && [ $rp != "N" ]
     do
         read -p "Desea iniciar el demonio ahora?(S/N): " rp
@@ -68,25 +63,36 @@ initSistema(){
 
     if [ $rp = "s" ] || [ $rp = "S" ]; then
         startDaemon
+    else
+        echo " Explicar modo de ejecutar demonio desde start"
     fi
 }
 
 
+
+# Línea principal 
+
+echo -e "..Leyendo archivo de configuración"
 valConfigFile
 
-echo -e "Setear Variables de Enterno"
-setVariables
+echo -e "..Generando Variables de ambiente"
+exportVariables
+
+echo -e "..Estableciendo permisos correctamente"
+bash ./permisos.sh
+if [ $? -gt 1 ]; then
+    exit 3
+fi
 
 
-bash testSisop.sh
 
 if [ $# = 0 ]; then 
-    initSistema
+    default
 elif [ $1 == "-d" ]; then
     startDaemon
 elif [ $1 == "-h" ]; then
     showHelp
 else
     echo -e "Parámetro ingresado inexistente\n" 
-    initSistema 
+    default 
 fi
