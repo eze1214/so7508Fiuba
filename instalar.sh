@@ -2,6 +2,7 @@
 
 GRUPO=~/grupo05
 CONFG="$GRUPO/dirconf/config.cnf"
+ARCH_LOG="log.txt"
 
 escribirConfig () {
 	WHEN=`date +%d/%m/%Y-%T`
@@ -26,30 +27,36 @@ copiarArchivos (){
 	totalArchivosNovedades=`ls "$(pwd)/novedades"`
 
 	echo -e "\nInstalando programas"
+	./log.sh -w INSTALADOR -m "Instalando Programas" -i $ARCH_LOG
 	echo "-----------------------------------------"
 	for ejecutable in ${totalEjecutables[*]}
 	do
 		cp "$(pwd)/ejecutables/$ejecutable" "$GRUPO/$EJECUTABLES"
 		echo "Instalado $(pwd)/ejecutables/$ejecutable en $GRUPO/$EJECUTABLES"
+		./log.sh -w INSTALADOR -m "Instalado $(pwd)/ejecutables/$ejecutable en $GRUPO/$EJECUTABLES" -i $ARCH_LOG
 	done
 	echo "-----------------------------------------"
 
 	echo -e "\nCopiando archivos Maestros"
 	echo "-----------------------------------------"
+	./log.sh -w INSTALADOR -m "Copiando archivos maestros" -i $ARCH_LOG
 	for archivoMaestro in ${totalArchivosMaestros[*]}
 	do
 		cp "$(pwd)/maestros/$archivoMaestro" "$GRUPO/$MAESTROS"
 		echo "Instalado $(pwd)/maestros/$archivoMaestro en $GRUPO/$MAESTROS"
+		./log.sh -w INSTALADOR -m "Instalado $(pwd)/maestros/$archivoMaestro en $GRUPO/$MAESTROS" -i $ARCH_LOG
 	done
 	echo "-----------------------------------------"
 
 	if [ ! -f "$CONFG" ]; then 
 		echo -e "\nCopiando Archivos de Novedades"
 		echo "-----------------------------------------"
+		./log.sh -w INSTALADOR -m "Copiando Archivos de novedades" -i $ARCH_LOG
 		for archivoNovedades in ${totalArchivosNovedades[*]}
 		do
 			cp "$(pwd)/novedades/$archivoNovedades" "$GRUPO/$NOVEDADES"
 			echo "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES"
+			./log.sh -w INSTALADOR -m "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES" -i $ARCH_LOG	
 		done
 		echo "-----------------------------------------"
 	fi
@@ -129,11 +136,12 @@ validarDirectorios (){
 cargarDirectorios(){
 	#Se cargan los directorios desde el archivo de configuración
 	echo -e "\nSe ha detectado una instalación previa"
-	echo -e "\nSe sobreescribiron los archivos maestros y ejecutables"
+	echo -e "\nSe sobreescribieron los archivos maestros y ejecutables"
 	EJECUTABLES=$(grep '^BINARIOS' "$CONFG" | cut -d '=' -f 2  | cut -d '/' -f 5-)
     MAESTROS=$(grep '^MAESTROS' "$CONFG" | cut -d '=' -f 2  | cut -d '/' -f 5-)
     echo -e "Directorio de ejecutables $EJECUTABLES"
     echo -e "Directorio de maestros $MAESTROS"
+    ./log.sh -w INSTALADOR -m "Se cargaron los directorios desde el archivo de configuracion Maestros: $GRUPO/$MAESTROS Ejecutables: $GRUPO/$EJECUTABLES" -i $ARCH_LOG
 }
 
 definirDirectorios (){
@@ -147,6 +155,7 @@ definirDirectorios (){
    			if [ $error = 1 ]; then
   				OPCION="n"
   				echo -e "\n Error no se puede ingresar directorios con nombres duplicados"
+  				./log.sh -w INSTALADOR -m "Se ingresaron nombres duplicados en los directorios" -e $ARCH_LOG		
   			fi
 		done
 	else
@@ -165,6 +174,7 @@ confirmarDirectorios(){
 	echo "Directorio de archivos de rechazados: $RECHAZADOS "	
 	echo "Directorio de archivos de log: $LOG "
 	echo -e "\nEstá de acuerdo con estos datos (s/n)"
+	./log.sh -w INSTALADOR -m "Seleccionó el nombre de los directorios" -i $ARCH_LOG
 	read OPCION	
 }
 
@@ -173,10 +183,12 @@ crearDirectorios(){
 
 	echo -e "\nCreando Estructuras de directorio.." 
     echo "-----------------------------------------"
+	./log.sh -w INSTALADOR -m "Creando estructura de directorio" -i $ARCH_LOG
 	for directorio in ${directorios[*]}
 	do
 		echo "Creando $directorio"
 		mkdir -p "$GRUPO/$directorio"
+		./log.sh -w INSTALADOR -m "Directorio Creado $directorio" -i $ARCH_LOG
 	done
 	echo "-----------------------------------------"
 }
@@ -184,15 +196,21 @@ crearDirectorios(){
 crearArchivoConfiguracion()
 {
 	if [ $HAYINSTALACION = "false" ]; then
+		./log.sh -w INSTALADOR -m "Se creo el archivo de configuracion en $CONFG" -i $ARCH_LOG
  		escribirConfig
+ 		./log.sh -w INSTALADOR -m "Se finaliza la instalacion" -i $ARCH_LOG
+	else
+		./log.sh -w INSTALADOR -m "Se finaliza la reinstalación" -i $ARCH_LOG
 	fi
 }
 
 detectarInstalacion(){
  if [ -f "$CONFG" ]; then
  	HAYINSTALACION="true"
+ 	./log.sh -w INSTALADOR -m "Se inicia reinstalación" -i $ARCH_LOG
  else 
  	HAYINSTALACION="false"
+ 	./log.sh -w INSTALADOR -m "Se inicia instalación" -i $ARCH_LOG
  fi
 }
 
@@ -203,7 +221,6 @@ instalacion (){
 		copiarArchivos
 		crearArchivoConfiguracion
 		echo "Fin de instalacion"
-	
 }
 
 versionPerl(){
@@ -219,8 +236,10 @@ verificarSistema(){
 		echo "-----------------------------------------"
 		cat $CONFG;
 		echo "-----------------------------------------"
+		./log.sh -w INSTALADOR -m "Se verifico que la aplicación ya estaba instalada" -i $ARCH_LOG
 	else
 		echo -e "\nAplicación no instalada"
+		./log.sh -w INSTALADOR -m "Se verifico que la aplicación ya no estaba instalada" -i $ARCH_LOG
 	fi
 }
 
@@ -245,4 +264,10 @@ done
 
 if [ $# == 0 ]; then 
 	echo -e "Error: debe ingresar algun parametro"
+	./log.sh -w INSTALADOR -m "Se ejecuto el instalador sin parametros" -e $ARCH_LOG
+fi
+
+if [ -d "$GRUPO/dirconf" ]; then
+	cat $ARCH_LOG >> "$GRUPO/dirconf/$ARCH_LOG"
+	rm $ARCH_LOG
 fi
