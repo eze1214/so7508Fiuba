@@ -1,104 +1,143 @@
-#!/bin/sh
+#!/bin/bash
 
 # Movimiento de archivos 
 
+DUPLICADOS="duplicados"
 
-if [ $# -lt 2 ]; then
-    echo -e "Error! Faltan parámetros"
-    exit 1
-fi
-
-sourcePath="$1"
-destPath="$2"
-
-#sourcePath="$NOVEDADES/novedad2.csv"
-#destPath="$ACEPTADOS"
-
-
-if [ ! -f $sourcePath ]; then 
-    echo "Error! El archivo de origen debe ser un archivo"
-    exit 2
-fi
-
-if [ ! -d $destPath ]; then 
-    echo "Error! El archivo de destino debe ser un directorio"
-    exit 3
-fi
+########################################################################
+#                             Modo Uso 
+#
+#
+#   ./moverArchivos.sh "ruta_archivo" "ruta_carpeta_destino"  
+#
+#   Retornos:
+#   0:      Copia Correcta
+#   1:      Faltan Parámetros 
+#   2:      La ruta de origen no es la de un archivo
+#   3:      La ruta de destino no es una carpeta 
+#   4:      No se pudo crear la carpeta a colocar dupicados
+#   5:      Error la realizar la copia, la copia no se realizó 
+#
+########################################################################
 
 
 
-
-nextValueDupFile(){
-    local dirPathDup="$destPath/duplicados"
-    local dupName="$name_"
-    lastFilenameDup=$( ls -m -r $dirPathDup | grep "$dupName" | cut -d"," -f 1)
-    echo "dupName:  $$( ls -m -r $dirPathDup)"
-    echo "lastFilenameDup: $lastFilenameDup"
+# realizar la copia del archivo 
+copy(){
+    local destPath=$1
+    cp $sourceFilePath $destPath 2> /dev/null 
     
-    if [ -z $lastFilenameDup ]; then 
+}
+
+
+# Generar el número de secuencia correspondiente para este duplicado
+nextDupFileSeq(){
+    # Patron de nombre buscado 
+    local pattern="${name}_"
+    
+    # obtengo los archivos que cumplen con el patron y me quedo con el primero    
+    lastDupFilename=$( ls  -r $dupDirPath | awk  -v pattern=$pattern ' $0 ~ pattern {print}' | tr '\n' ',' | cut -d"," -f 1)   
+    
+    ## No encuentra el patrón buscado
+    if [ -z "$lastDupFilename" ]; then 
         return 1
     fi
     
-    nextNumberFilename=${lastFilenameDup##*_} 
-    echo "nextNumberFilename: $nextNumberFilename"
-    nextNumberFilename=${nextNumberFilename%.*}   
-    echo "nextNumberFilename: $nextNumberFilename"
-    nextNumberFilename=`expr $nextNumberFilename + 1`
+    ## Encuentra el patrón => genera un número más del ultimo encontrado
+    # Quitar path nombre hasta "_"
+    local nextFilenameSeq=${lastDupFilename##*_}
+    # quitar extension a lo que quedá y así obtener número de secuencia 
+    nextFilenameSeq=${nextFilenameSeq%.*}   
     
-    echo "Nuevo número: $nextNumberFilename"
+    if [ -z  $nextFilenameSeq ]; then 
+        nextFilenameSeq=0
+    fi
     
-    return $nextNumberFilename
-}
-
-nameNewDupFile(){
-    nextValueDupFile
-    value=$?    
-    newName="$name""_$value.$extension"
+    # Sumar uno al valor encontrado 
+    nextFilenameSeq=`expr $nextFilenameSeq + 1`
     
-    echo "Nuevo nombre: $newName"
+    return $nextFilenameSeq
 }
 
 
-copy(){
-    local dest=$1
-    cp $sourcePath $dest
-}
-
-
-fileDup() {    
+dupFile() {    
     # Genero la carpeta duplicados si no existe
-    echo "archivo duplicado "
-    local dirPathDup="$destPath/duplicados"
-    if [ ! -d $dirPathDup ]; then 
-        mkdir $dirPathDup
-        echo "Generar carpeta"
+    dupDirPath="$destPath/$DUPLICADOS"
+    
+    if [ ! -d $dupDirPath ]; then 
+        mkdir $dupDirPath
+        
+        if [ ! -d $dupDirPath ]; then 
+            exit 4
+        fi
     fi 
     
-    nameNewDupFile    
-    local destFileNamePath=$dirPathDup/$newName 
-    copy $destFileNamePath
-}
-
-fileNoDup(){
-#    local newNameDest="$name""_1.$extension"
- #   local destFileNamePath=$destPath/$newFilenameDest 
- echo " Archivo No duplicado "
-    copy $destFileNamePath
+    nextDupFileSeq
+    local sequence=$?
+    local newName="$name""_$sequence$extension"
+       
+    dupFileDestPath=$dupDirPath/$newName 
+    copy $dupFileDestPath
 }
 
 
-fileName=$(echo "$sourcePath" | sed 's/.*\///')
-destFileNamePath=$destPath/$fileName 
-name=${fileName%.*} 
-extension=${fileName##*.} 
 
-if [ -f $destFileNamePath ]; then
-    echo "El archivo existe |$destFileNamePath|"
-    fileDup
-else
-    echo "El archivo NO Existe |$destFileNamePath|"
-    fileNoDup
+
+#  Cuerpo principal 
+
+# Debe haber dos parametros, caso contrarío error
+if [ $# -lt 2 ]; then
+    echo -e "Error! Faltan parámetros" >&2
+    exit 1
 fi
+
+sourceFilePath="$1"
+destPath="$2"
+
+#sourceFilePath="$NOVEDADES/novedad2.csv"
+#destPath="$ACEPTADOS"
+
+
+# El origen debe ser un archivo 
+if [ ! -f $sourceFilePath ]; then 
+    echo "Error! La ruta de origen debe ser un archivo" >&2
+    exit 2
+fi
+
+# El destino debe ser una carpeta
+if [ ! -d $destPath ]; then 
+    echo "Error! La ruta de destino debe ser un directorio" >&2
+    exit 3
+fi
+
+# Obtengo el nombre del archivo
+filename=$(echo "$sourceFilePath" | sed 's/.*\///')
+# Obtengo el nombresin extensión
+name=${filename%.*} 
+# Ontengo la extensión
+extension=${filename##*.} 
+
+if [ "$extension" = "$name" ]; then 
+    extension=""
+else
+    extension=".$extension"
+fi
+# Armo la ruta de destino del archivo, si no tuviera duplicados
+dupFileDestPath=$destPath/$filename 
+
+# si ese archivo ya existe, entonces es un duplicado, sino lo copio
+if [ -f $dupFileDestPath ]; then
+    dupFile
+else
+    copy $dupFileDestPath
+fi
+
+# si no se realizo la copia => error 5    
+if [ ! -f $dupFileDestPath ]; then 
+    exit 5
+fi
+    
+exit 0
 
 
 
