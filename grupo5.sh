@@ -13,9 +13,15 @@ source ./inicializaciones.sh
             
 
 startDaemon(){
-    ./daemon.sh
+    # Intento eliminar el archivo temporal en el cual voy a guardar la pid del demonio
+    rm /tmp/daemon.pid 2> /dev/null
     
-    PID=$(ps -ef | grep "daemon.sh" | awk '{print $2}' )
+    # Corro el demonio en segundo plano y además gurdo PID en el archivo 
+    ./daemon.sh > /dev/null 2> /dev/null & echo $! >> /tmp/daemon.pid
+    
+    # Leyendo el archivo obtengo el PID --> así es mucho más facil matarlo
+    PID=$(cat /tmp/daemon.pid)
+           
     echo -e ".. Demonio Corriendo ..  PID: $PID"
 }
 
