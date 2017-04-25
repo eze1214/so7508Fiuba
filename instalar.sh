@@ -227,6 +227,7 @@ versionPerl(){
 	echo -n "Version de Perl : "
 	perl -e 'print $ ];';
 	perl -e 'print "\n";'
+	./log.sh -w INSTALADOR -m "Se verifico la version de Perl" -i $ARCH_LOG
 }
 
 verificarSistema(){
