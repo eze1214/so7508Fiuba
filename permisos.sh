@@ -1,42 +1,42 @@
-#!/bin/bash/
 
-
-mastersPer(){
+mastersPermisos(){
     # Establezco permisos de lectura a los Maestros
     files=$( ls -1 $MAESTROS/ )
     
     if [ ${#files} -eq 0 ]; then 
-        echo -e "No Existen archivos maestros"
+        echo -e ".... Error! No Existen archivos maestros"
         exit 1
     fi
     
 
     for file in $files; do
-        chmod 440 $MAESTROS/$file
+        chmod 444 $MAESTROS/$file
     done
 
 }
 
 
-binaryPer(){
+binaryPermisos(){
     # Permisos de Ejecución para los vinarios
     files=$( ls -1 $BINARIOS/ )
 
     for file in $files; do
-        chmod 110 $BINARIOS/$file
+        chmod 111 $BINARIOS/$file
     done
             
     if [ ${#files} -eq 0 ]; then 
-        echo -e "No Existen archivos binarios"
+        echo -e ".... Error! No Existen archivos binarios"
         exit 2
     fi
 }
 
 
 
+# Estableciendo permisos a archivos maestros 
+mastersPermisos
 
-mastersPer
-binaryPer
+# Estableciendo permisos binarios
+binaryPermisos
 
 
 
