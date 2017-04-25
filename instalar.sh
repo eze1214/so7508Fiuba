@@ -266,6 +266,7 @@ done
 if [ $# == 0 ]; then 
 	echo -e "Error: debe ingresar algun parametro"
 	./log.sh -w INSTALADOR -m "Se ejecuto el instalador sin parametros" -e $ARCH_LOG
+	echo -e "Error: El parametro ingresado es erroneo, \nRecuerde que los permitidos son -p -t -i"
 fi
 
 if [ -d "$GRUPO/dirconf" ]; then
