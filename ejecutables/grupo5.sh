@@ -12,7 +12,7 @@ CONFDIR="$PWD/dirconf/config.cnf"
 source ./inicializaciones.sh
             
 
-startDaemon(){
+startDaemon(){    
     # Intento eliminar el archivo temporal en el cual voy a guardar la pid del demonio
     rm /tmp/daemon.pid 2> /dev/null
     
@@ -58,14 +58,6 @@ default(){
 
 
 # Línea principal 
-
-
-echo -e "..Estableciendo permisos correctamente"
-source ./permisos.sh
-
-if [ $? -gt 0 ]; then
-    exit 3
-fi
 
 
 

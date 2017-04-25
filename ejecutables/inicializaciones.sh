@@ -67,3 +67,6 @@ fi
 
 
 echo ".... Inicialización realizada ...."
+
+echo -e "..Estableciendo permisos correctamente"
+source ./permisos.sh

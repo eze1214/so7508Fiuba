@@ -136,6 +136,8 @@ fi
 if [ ! -f $dupFileDestPath ]; then 
     exit 5
 fi
+
+rm $sourceFilePath
     
 exit 0
 
