@@ -7,9 +7,12 @@ echo -e " Trabajo Práctico Sistemas operativos Grupo 5"
 echo -e "==============================================\n"
 
 # Echo defino el archivo de configuración 
-CONFDIR="$PWD/dirconf/config.cnf"
+GRUPO=~/grupo05
 
-source ./inicializaciones.sh
+    CONFIG="$GRUPO/dirconf/config.cnf"
+    export BINARIOS=`grep -A 0 BINARIOS $CONFIG | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
+
+source $BINARIOS/inicializaciones.sh
             
 
 startDaemon(){    
@@ -17,7 +20,9 @@ startDaemon(){
     rm /tmp/daemon.pid 2> /dev/null
     
     # Corro el demonio en segundo plano y además gurdo PID en el archivo 
-    ./daemon.sh > /dev/null 2> /dev/null & echo $! >> /tmp/daemon.pid
+   # $BINARIOS/daemon.sh > /dev/null 2> /dev/null & echo $! >> /tmp/daemon.
+    export GRUPO5_MAESTRO_DE_BANCOS="maestro_de_bancos.csv"
+    $BINARIOS/daemon.sh  & echo $! >> /tmp/daemon.pid
     
     # Leyendo el archivo obtengo el PID --> así es mucho más facil matarlo
     PID=$(cat /tmp/daemon.pid)

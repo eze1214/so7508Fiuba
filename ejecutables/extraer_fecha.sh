@@ -1,2 +1,4 @@
 filename=$1
-echo "${filename#*_}"
+filename="${filename#*_}"
+
+echo "${filename%.*}"
