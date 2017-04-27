@@ -64,6 +64,10 @@ if [ -z $LOG ]; then
     echo -e ".... Estableciendo la variable LOG: $LOG "
 fi
 
+if [ -z $MAESTRO_DE_BANCOS ]; then
+    export MAESTRO_DE_BANCOS="maestro_de_bancos.csv"
+    echo -e ".... Estableciendo la variable MAESTRO_DE_BANCOS: $GRUPO5_MAESTRO_DE_BANCOS "
+fi
 
 
 echo ".... Inicialización realizada ...."

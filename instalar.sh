@@ -116,7 +116,7 @@ validarDirectorios (){
 	#dado que al compararse todos los elementos con todos se comparan los que son iguales
 	
 	contador=0 #Primer Elemento a comparar
-	directorios1=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS})
+	directorios1=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS} ${LOG})
 	error=0
 	for directorio1 in ${directorios1[*]}
 	do
@@ -179,7 +179,7 @@ confirmarDirectorios(){
 }
 
 crearDirectorios(){
-	directorios=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS})
+	directorios=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS} ${LOG})
 
 	echo -e "\nCreando Estructuras de directorio.." 
     echo "-----------------------------------------"

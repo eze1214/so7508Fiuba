@@ -14,5 +14,5 @@ if [ -f /tmp/daemon.pid ]; then
 fi
 
 #export GRUPO5_MAESTRO_DE_BANCOS="maestro_de_bancos.csv"
-$BINARIOS/daemon.sh  & echo $! >> /tmp/daemon.pid
+`$BINARIOS/daemon.sh  & echo $! >> /tmp/daemon.pid`
 
