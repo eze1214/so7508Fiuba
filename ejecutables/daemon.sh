@@ -2,6 +2,9 @@ CICLO=0
 SLEEP_TIME=5s
 LOG_DAEMON="$LOG/daemon.log"
 
+echo $!
+
+
 checkNovedades(){
 
 	for entry in "$NOVEDADES"/*
