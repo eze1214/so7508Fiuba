@@ -64,7 +64,7 @@ Este parámetro setea las variables de entorno para esa terminal según el **Arc
 ```
 Muestra las formas de ejecución de *inicializar.sh* y las opciones de parámetros, como se muestra a continuación: 
 ```sh
-Uso: grupo5.sh [OPCION..] 
+Uso: inicializar.sh [OPCION..] 
             OPCIONES:
                 -d          Iniciar el demonio en forma automática
                 -h          Muestra Ayuda
