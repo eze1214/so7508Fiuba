@@ -17,8 +17,12 @@ fi
 
 PID=$(cat /tmp/daemon.pid )
 
-kill -9 $PID
+kill -9 $PID 2> /dev/null
 
-echo "..Deteniendo Demonio, PID: $PID .. "
+if [ $? -eq 0 ]; then
+  echo "..Deteniendo Demonio, PID: $PID .. "
+else
+  echo "El Demonio NO está corriendo "
+fi
 
 rm /tmp/daemon.pid 2> /dev/null

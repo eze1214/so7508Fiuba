@@ -13,16 +13,16 @@ optHelp(){
             ./log.sh -w Generar_Variable -m \"Variable Inexistente\" -e /tmp/file.log
             ./log.sh -w Generar_Variable -m \"Variable Inexistente\" -e /tmp/file.log
  Retorno:
-        0       Fin correcto
+        0       Fin correcto 
         1       Parámetro inválido" 
 }
 
-#echo "$(ps -o comm= $PPID)"
+#echo "$(ps -o comm= $PPID)" 
 
-#echo "$(ps -o user= $PPID)"
+#echo "$(ps -o user= $PPID)" 
 
-if [ $1 = "-h" ]; then
-    optHelp
+if [ $1 = "-h" ]; then 
+    optHelp 
     exit 0
 fi
 
@@ -31,7 +31,7 @@ what="INFOR"
 while [[ $# -gt 1 ]]
 do
     command=$1
-
+    
     case $command in
         -w|-where)
             where="$2"
@@ -39,15 +39,15 @@ do
             ;;
         -i)
             what="INFOR"
-            shift
+            shift 
             ;;
         -a)
             what="ALERT"
-            shift
+            shift 
             ;;
         -e)
             what="ERROR!"
-            shift
+            shift 
             ;;
         -m|-why)
             why="$2"
@@ -55,17 +55,17 @@ do
             ;;
         *)
             echo -e "Parámetro '$1' desconocido .. \n"
-            optHelp
+            optHelp 
             exit 1
             ;;
     esac
 done
 
-when="$(date '+%d/%m/%Y %H:%M:%S')"
+when="$(date '+%d/%m/%Y %H:%M:%S')" 
 who="$(ps -o user= $PPID)"
 
 if [ ! "$where" ]; then
-    where="$(ps -o  fname= $PPID)"
+    where="$(ps -o  fname= $PPID)" 
 fi
 
 LOG_FILE="$1"
