@@ -2,58 +2,41 @@
 
 GRABITAC="$BINDIR/GrabarBitacora.sh"
 MOVER="$BINDIR/MoverArchivo.sh"
-NOVEDADES=/home/ezequiel/grupo05/novedades/
-EJECUTABLES=/home/ezequiel/sisop/
 
-ambienteInicializado{
-  if [ "${GRUPO}" == "" ]; then 
-    return 1
-  fi
-
-  if [ "${BINARIOS}" == "" ]; then  
-    return 1
-  fi
-
-  if [ "${MAESTROS}" == "" ]; then  
-    return 1
-  fi
-
-  if [ "${NOVEDADES}" == "" ]; then 
-    return 1
-  fi
-
-  if [ "${ACEPTADOS}" == "" ]; then 
-    return 1
-  fi
-
-  if [ "${RECHAZADOS}" == "" ]; then  
-    return 1
-  fi
-
-  if [ "${VALIDADOSDIR}" == "" ]; then  
-    return 1
-  fi
-
-  if [ "${REPORTESDIR}" == "" ]; then 
-    return 1
-  fi
-
-  if [ "${LOG}" == "" ]; then 
-    return 1
-  fi
-
-  if [ "${MAESTRO_DE_BANCOS}" == "" ]; then 
-    return 1
-  fi
-  return 0
+ambienteInicializado(){
+  if [ "${GRUPO}" = "" ]; then 
+    echo 1
+  elif [ "${BINARIOS}" = "" ]; then  
+    echo 1
+  elif [ "${MAESTROS}" = "" ]; then  
+    echo 1
+  elif [ "${NOVEDADES}" = "" ]; then 
+    echo 1
+  elif [ "${ACEPTADOS}" = "" ]; then 
+    echo 1
+  elif [ "${RECHAZADOS}" = "" ]; then  
+    echo 1
+  elif [ "${VALIDADOSDIR}" = "" ]; then  
+    echo 1
+  elif [ "${REPORTESDIR}" = "" ]; then 
+    echo 1
+  elif [ "${LOG}" = "" ]; then 
+    echo 1
+  elif [ "${MAESTRO_DE_BANCOS}" = "" ]; then 
+    echo 1
+  else
+  echo 0
+fi
 }
 
 function verificarAmbiente(){
-    ambienteInicializado 
-    if [ $? == 1 ]; then
-      local mensajeError="Ambiente no inicializado"
-      echo "$Ambiente no inicializado"
+    result=$(ambienteInicializado) 
+    echo " result $result"
+    if [ "$result" = 1 ]; then
+      echo "Error ambiente no inicializado"
       exit 1
+    else
+      echo "Ambiente iniciado"
     fi
 }
 
@@ -97,8 +80,8 @@ verificarMonto(){
 
 
 verificarFechas(){
-    echo "Fecha procesada $FECHA, fecha extraida $(./extraer_fecha.sh $archivo)"
-    verificacionFecha=$(./validar_fecha2.sh $FECHA $(./extraer_fecha.sh $archivo))
+    echo "Fecha procesada $FECHA, fecha extraida $($BINARIOS/extraer_fecha.sh $archivo)"
+    verificacionFecha=$($BINARIOS/validar_fecha2.sh $FECHA $($BINARIOS/extraer_fecha.sh $archivo))
     if [ "$verificacionFecha" = "true" ]; then 
       echo "fecha correcta"
     else
@@ -160,15 +143,16 @@ verificarCampos45(){
 }
 
 verificarBancos(){
-  COD_CBU_NOVEDADES=$(echo $CBU_NOVEDADES | sed "s/\(.\{3\}\)\(.*\)/\1/")
+  COD_CBU_ORIGEN=$(echo $CBU_NOVEDADES | sed "s/\(.\{3\}\)\(.*\)/\1/")
   COD_CBU_DESTINO=$(echo $CBU_DESTINO | sed "s/\(.\{3\}\)\(.*\)/\1/")
-  echo "COD_CBU_NOVEDADES $COD_CBU_NOVEDADES, COD_CBU_DESTINO $COD_CBU_DESTINO"
-  NOVEDADES_BUSCADO=$(.$NOVEDADES/buscar_banco.sh -c /bamae.csv $COD_CBU_NOVEDADES)
-  DESTINO_BUSCADO=$(.$NOVEDADES/buscar_banco.sh -c ./bamae.csv $COD_CBU_DESTINO)
-  if [ "$NOVEDADES_BUSCADO" != "false" ]; then
-    echo "NOVEDADES validado"
+  echo "COD_CBU_ORIGEN $COD_CBU_ORIGEN, COD_CBU_DESTINO $COD_CBU_DESTINO"
+  ORIGEN_BUSCADO=$($BINARIOS/buscar_banco.sh -c $MAESTROS/$MAESTRO_DE_BANCOS $COD_CBU_ORIGEN)
+  DESTINO_BUSCADO=$($BINARIOS/buscar_banco.sh -c $MAESTROS/$MAESTRO_DE_BANCOS $COD_CBU_DESTINO)
+  echo "$ORIGEN_BUSCADO $DESTINO_BUSCADO"
+  if [ "$ORIGEN_BUSCADO" != "false" ]; then
+    echo "Origen validado"
   else
-    echo "NOVEDADES no validado"
+    echo "Origen no validado"
   fi
   if [ "$DESTINO_BUSCADO" != "false" ];then
     echo "Destino validado"
@@ -191,7 +175,7 @@ parsear(){
   CBU_NOVEDADES=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\4/" | sed "s/;//g" )
   CBU_DESTINO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)([0-9]*)(.*$)/\5/" | sed "s/;//g" )
 }
-#verificarAmbiente
+verificarAmbiente
 echo "hola"
 #Ordeno los archivos cronologicamente (mas antiguo al mas reciente) y los proceso
 archivosOrdenados=$(ls -A "$NOVEDADES" | sed 's-^\(.*\)\([0-9]\{8\}\)\.csv$-\2\1.csv-g' | sort | sed 's-^\([0-9]\{8\}\)\(.*\)\.csv$-\2\1.csv-g')
@@ -231,7 +215,7 @@ for archivo in $archivosOrdenados ; do
     else
      echo "archivo no valido"
     fi
-  done <"$NOVEDADES$archivo"
+  done <"$NOVEDADES/$archivo"
   echo "el monto sumado es $SUMA"
   echo "la contidad de registros sumados $CONTADOR"
 done
