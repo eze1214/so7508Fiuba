@@ -2,8 +2,51 @@
 
 GRABITAC="$BINDIR/GrabarBitacora.sh"
 MOVER="$BINDIR/MoverArchivo.sh"
-ORIGEN=/home/ezequiel/grupo05/novedades/
+NOVEDADES=/home/ezequiel/grupo05/novedades/
+EJECUTABLES=/home/ezequiel/sisop/
 
+ambienteInicializado{
+  if [ "${GRUPO}" == "" ]; then 
+    return 1
+  fi
+
+  if [ "${BINARIOS}" == "" ]; then  
+    return 1
+  fi
+
+  if [ "${MAESTROS}" == "" ]; then  
+    return 1
+  fi
+
+  if [ "${NOVEDADES}" == "" ]; then 
+    return 1
+  fi
+
+  if [ "${ACEPTADOS}" == "" ]; then 
+    return 1
+  fi
+
+  if [ "${RECHAZADOS}" == "" ]; then  
+    return 1
+  fi
+
+  if [ "${VALIDADOSDIR}" == "" ]; then  
+    return 1
+  fi
+
+  if [ "${REPORTESDIR}" == "" ]; then 
+    return 1
+  fi
+
+  if [ "${LOG}" == "" ]; then 
+    return 1
+  fi
+
+  if [ "${MAESTRO_DE_BANCOS}" == "" ]; then 
+    return 1
+  fi
+  return 0
+}
 
 function verificarAmbiente(){
     ambienteInicializado 
@@ -14,224 +57,10 @@ function verificarAmbiente(){
     fi
 }
 
-
-function msjLog() {
-  local MSJOUT=$1
-  local TIPO=$2
-  #echo -e "${MSJOUT}"
-  "$GRABITAC" "$0" "${MSJOUT}" "$TIPO"
-}
-
-function EsArchivoDeTextoPlano(){
-  local archivo=$1
-  local tipoArchivo=$(file -b --mime-type "$OKDIR/$archivo")
-  #echo "Tipo del archivo: $tipoArchivo (NOVA)" #NOVA
-  if [ $tipoArchivo = 'text/plain' ] ; then
-    return 0 #TRUE
-  else
-    return 1 #FALSE
-  fi
-}
-
-function EsArchivoDuplicado(){
-  local archivo=$1
-  if [ -f "$PROCDIR/procesadas/$archivo" ] ; then
-    return 0 #TRUE
-  else
-    return 1 #FALSE
-  fi
-}
-
-#TODO: PREGUNTAR: NOSE si tiene que ser numeros sin coma o con coma
-function EsEstructuraInvalida(){
-  local archivo=$1
-  if EsArchivoDeTextoPlano $archivo ; then
-    read -r primeraLinea < "$OKDIR/$archivo"
-    #echo primeraLinea: $primeraLinea
-    local esCampoValido=$(echo -e $primeraLinea | grep -c "^[0-9]\{7\};[0-9]\+\([,][0-9]\+\)\?$")
-    #echo esCampoValido: $esCampoValido
-
-    if [ $esCampoValido -eq 1 ] ; then
-      return 1 #FALSE
-    else
-      return 0 #TRUE
-    fi
-  else
-    return 0 #TRUE
-  fi
-}
-
-function RechazarArchivo(){
-  local archivo=$1
-  "$MOVER" "$OKDIR/$archivo" "$NOKDIR/"
-  cantidadArchivosRechazados=$(($cantidadArchivosRechazados+1))
-}
-
-function EsOfertaValida(){
-  motivoRechazo='' #La uso como variable global
-  local contratoFusionado=$1
-  #echo contratoFusionado: $contratoFusionado
-  local importeOfertaTmp=$2
-  local importeOferta=$(echo "$importeOfertaTmp" | sed 's/,/\./g')
-  #local importeOferta=$2
-  # echo importeOFerta: $importeOferta
-
-  local grupo=$(echo $contratoFusionado | sed 's-^\([0-9]\{4\}\)[0-9]\{3\}$-\1-g')
-  #echo "NroGrupo: $grupo" #NOVA
-  local orden=$(echo $contratoFusionado | sed 's-^[0-9]\{4\}\([0-9]\{3\}\)$-\1-g')
-  #echo "NroOrden: $orden" #NOVA
-
-  if [ $(grep -c "^$grupo;" "$MAEDIR/Grupos.csv") -eq 0 ] ; then
-    motivoRechazo=$motivoRechazo'Grupo no encontrado. '
-  else
-    local lineaGruposCsv=$(grep "^$grupo;" "$MAEDIR/Grupos.csv")
-    #echo "lineaGrupo: $lineaGruposCsv"
-    local estadoGrupo=$(echo "$lineaGruposCsv" | cut -f2 -d';')
-    # echo "estadoGrupo: $estadoGrupo" #NOVA
-    local valorCuotaPura=$(echo "$lineaGruposCsv" | cut -f4 -d';' | sed 's-,-\.-g')
-    # echo "valorCuotaPura: $valorCuotaPura" #NOVA
-    local cantidadCuotasPendientes=$(echo "$lineaGruposCsv" | cut -f5 -d';')
-    # echo "cantidadCuotasPendientes: $cantidadCuotasPendientes" #NOVA
-    local cantidadCuotasLicitacion=$(echo "$lineaGruposCsv" | cut -f6 -d';')
-    # echo "cantidadCuotasLicitacion: $cantidadCuotasLicitacion" #NOVA
-    local montoMinimo=$(echo "$valorCuotaPura*$cantidadCuotasLicitacion" | bc)
-    # echo "montoMinimo: $montoMinimo" #NOVA
-    local montoMaximo=$(echo "$valorCuotaPura*$cantidadCuotasPendientes" | bc)
-    # echo "montoMaximo: $montoMaximo" #NOVA
-
-    if [ $(echo "$importeOferta>=$montoMinimo" | bc) -ne 1 ] ; then # 1 TRUE
-      motivoRechazo=$motivoRechazo'No alzanza el monto mínimo. '
-    fi
-
-    if [ $(echo "$importeOferta<=$montoMaximo" | bc) -ne 1 ] ; then # 1 TRUE
-      motivoRechazo=$motivoRechazo'Supera el monto máximo. '
-    fi
-
-    if [ "$estadoGrupo" = "CERRADO" ] ; then
-      motivoRechazo=$motivoRechazo'Grupo CERRADO. '
-    fi
-  fi
-
-  if [ $(grep -c "^$grupo;$orden;" "$MAEDIR/temaL_padron.csv") -eq 0 ] ; then
-    motivoRechazo=$motivoRechazo'Contrato no encontrado. '
-  else
-    local lineaPadronCsv=$(grep "^$grupo;$orden;" "$MAEDIR/temaL_padron.csv")
-    #echo "lineaPadronCsv: $lineaPadronCsv"
-    local flagParticipa=$(echo "$lineaPadronCsv" | cut -f6 -d';')
-    #echo "flagParticipa: $flagParticipa"
-
-    if [ "$flagParticipa" = " " ] ; then
-      motivoRechazo=$motivoRechazo'Suscriptor no puede participar. '
-    fi
-  fi
-
-  if [ "$motivoRechazo" = '' ] ; then
-    return 0 #TRUE
-  else
-    #echo 'motivoRechazo: '$motivoRechazo
-    return 1 #FALSE
-  fi
-}
-
-function RechazarRegistro(){
-  local fuente=$1
-  local registroOriginalCompleto="\"$2;$3\""
-  local usuario=$(whoami)
-  local fecha=$(date +"%y/%m/%d %H:%M:%S")
-  local codConcecionario=$(echo $archivo | cut -f1 -d'_')
-  local concecionario=$(echo $archivo | cut -f2 -d'_')
-  local archivoSalida="$codConcecionario"_"$concecionario".rech
-  echo "$fuente;$motivoRechazo;$registroOriginalCompleto;$usuario;$fecha" >> "$PROCDIR/rechazadas/$archivoSalida"
-
-  #NOVA
-  # echo "RechazarRegistro     > $archivoSalida"
-  # echo "Fuente               : $fuente"
-  # echo "Motivo Rechazo       : $motivoRechazo"
-  # echo "Registro de Oferta   : $registroOriginalCompleto"
-  # echo "Usuario              : $usuario"
-  # echo "Fecha                : $fecha"
-  #NOVA
-}
-
-function GrabarOfertaValida(){
-  local archivo=$1
-  local fechaArchivo=$(echo $archivo | sed 's-^.*\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)\.csv$-\1/\2/\3-g')
-  local codConcecionario=$(echo $archivo | cut -f1 -d'_')
-  local contratoFusionado=$2
-  local grupo=$(echo $contratoFusionado | sed 's-^\([0-9]\{4\}\)[0-9]\{3\}$-\1-g')
-  local orden=$(echo $contratoFusionado | sed 's-^[0-9]\{4\}\([0-9]\{3\}\)$-\1-g')
-  local importeOfertaTmp=$3
-  local importeOferta=$(echo "$importeOfertaTmp" | sed 's/,/\./g')
-  #local importeOferta=$(echo "$importeOfertaTmp" | cut -f1 -d',').$(echo "$importeOfertaTmp" | cut -f2 -d',')
-
-  local lineaPadronCsv=$(grep "^$grupo;$orden;" "$MAEDIR/temaL_padron.csv")
-  local nombreSuscriptor=$(echo "$lineaPadronCsv" | cut -f3 -d';')
-  local usuario=$(whoami)
-  local fecha=$(date +"%y/%m/%d %H:%M:%S")
-
-  local fechaProximoActoAdjudicacion=$("$BINDIR/ProximaFechaAdj.sh")
-
-  fechaProximoActoAdjudicacion=$(date -d"@$fechaProximoActoAdjudicacion" +%Y%m%d)
-  echo "$codConcecionario;$fechaArchivo;$contratoFusionado;$grupo;$orden;$importeOfertaTmp;$nombreSuscriptor;$usuario;$fecha" >> "$PROCDIR/validas/$fechaProximoActoAdjudicacion"".txt"
-
-  #NOVA
-  # echo "GrabarOfertaValida   > $fechaProximoActoAdjudicacion"".txt"
-  # echo "Codigo Concecionario : $codConcecionario"
-  # echo "Fecha Archivo        : $fechaArchivo"
-  # echo "Contrato Fusionado   : $contratoFusionado"
-  # echo "Grupo                : $grupo"
-  # echo "Nro de Orden         : $orden"
-  # echo "Importe Ofertado     : $importeOferta"
-  # echo "Nombre del Suscriptor: $nombreSuscriptor"
-  # echo "Usuario              : $usuario"
-  # echo "Fecha                : $fecha"
-  # #NOVA
-}
-
-function Procesar(){
-  local archivo=$1
-  local cantidadRegistrosLeidos=0
-  local cantidadRegistrosValidos=0
-  local cantidadRegistrosRechazados=0
-
-  while IFS='' read -r line || [[ -n "$line" ]]; do
-    local contratoFusionado=$(echo "$line" | cut -f1 -d';')
-    local importeOferta=$(echo "$line" | cut -f2 -d';')
-    # echo ''
-    cantidadRegistrosLeidos=$(($cantidadRegistrosLeidos+1))
-    if EsOfertaValida $contratoFusionado $importeOferta ; then
-      # echo "GRABAR oferta valida" #NOVA
-      GrabarOfertaValida $archivo $contratoFusionado $importeOferta
-      cantidadRegistrosValidos=$(($cantidadRegistrosValidos+1))
-    else
-      # echo "RECHAZAR registro" #NOVA
-      RechazarRegistro $archivo $contratoFusionado $importeOferta $motivoRechazo
-      motivoRechazo='' #Reseteamos el motivo
-      cantidadRegistrosRechazados=$(($cantidadRegistrosRechazados+1))
-    fi
-  done < "$OKDIR/$archivo"
-
-  # echo '' #NOVA
-  msjLog "Cantidad de registros leídos:\t$cantidadRegistrosLeidos" "INFO"
-  msjLog "Cantidad de ofertas válidas:\t$cantidadRegistrosValidos" "INFO"
-  msjLog "Cantidad de ofertas rechazadas:\t$cantidadRegistrosRechazados" "INFO"
-  "$MOVER" "$OKDIR/$archivo" "$PROCDIR/procesadas/"
-  cantidadArchivosProcesados=$(($cantidadArchivosProcesados+1))
-}
-
-function FinProceso() {
-  local cantidadArchivosProcesados=$1
-  local cantidadArchivosRechazados=$2
-  msjLog "Cantidad de archivos procesados: $cantidadArchivosProcesados" "INFO"
-  msjLog "Cantidad de archivos rechazados: $cantidadArchivosRechazados" "INFO"
-  msjLog "Fin de ProcesarOfertas" "INFO"
-  exit
-}
-
 verificarCantidadRegistros(){
   #leo el encabezado 
-  local cantidadRegistrosHEAD=$(head -1 $ORIGEN/$archivo | cut -d ";" -f 1)
-  local cantidadRegistros=$(wc -l $ORIGEN/$archivo | cut -d " " -f 1)
+  local cantidadRegistrosHEAD=$(head -1 $NOVEDADES/$archivo | cut -d ";" -f 1)
+  local cantidadRegistros=$(wc -l $NOVEDADES/$archivo | cut -d " " -f 1)
   let cantidadRegistros=cantidadRegistros-1 
   echo "$cantidadRegistrosHEAD - - $cantidadRegistros"
   if [ $cantidadRegistrosHEAD = $cantidadRegistros ]; then
@@ -245,8 +74,8 @@ verificarCantidadRegistros(){
 verificarMonto(){
   #Le borro el encabezado
   local suma=0
-  local sumaHEAD=$(head -1 $ORIGEN/$archivo | cut -d ";" -f 2)
-  contenido=$(sed '1d' $ORIGEN/$archivo | cut -d ";" -f 2)
+  local sumaHEAD=$(head -1 $NOVEDADES/$archivo | cut -d ";" -f 2)
+  contenido=$(sed '1d' $NOVEDADES/$archivo | cut -d ";" -f 2)
   echo -e "\n$contenido"
   for linea in $contenido; do
     echo $linea
@@ -266,39 +95,143 @@ verificarMonto(){
   fi
 }
 
-validarFecha(){
-  if [ "$1" = "hola" ]; then 
-  echo "trues"
-else
-  echo "bye"
-fi
+
+verificarFechas(){
+    echo "Fecha procesada $FECHA, fecha extraida $(./extraer_fecha.sh $archivo)"
+    verificacionFecha=$(./validar_fecha2.sh $FECHA $(./extraer_fecha.sh $archivo))
+    if [ "$verificacionFecha" = "true" ]; then 
+      echo "fecha correcta"
+    else
+     echo "fecha invalida"
+     VALIDO="false"
+    fi
+}
+
+verificarCampos23(){
+  MONTO=$(echo $MONTO | bc)
+  MONTO_MAYOR_CERO=$(echo "$MONTO > 0" | bc)
+      echo "estado : $ESTADO"
+    echo "monto : $MONTO"
+    echo "Condicion $MONTO_MAYOR_CERO"
+  if [[ $MONTO_MAYOR_CERO -eq 1 && "$ESTADO" = "Pendiente" ]]; then
+    echo "Mayor que 0 y pendiente"
+  elif [[ $MONTO_MAYOR_CERO -eq 0 && "$ESTADO" = "Anulada" ]]; then
+    echo "Menor que 0 y anulada"
+  elif [[ "$ESTADO" != "Anulada" && "$ESTADO" != "Pendiente" ]];then
+    echo "Campo 3 es diferente de anulada o pendiente"
+  elif [[ $MONTO_MAYOR_CERO -eq 0 && "$ESTADO" = "Pendiente" ]]; then
+    echo "Menor que 0 y pendiente"
+  elif [[ $MONTO_MAYOR_CERO -eq 1 && "$ESTADO" = "Anulada" ]]; then
+    echo "mayor que 0 y anulada"
+  else
+    echo "Ningun otro caso"
+    echo "estado : $ESTADO"
+    echo "monto : $MONTO"
+    echo "Condicion $MONTO_MAYOR_CERO"
+  fi
+}
+
+verificarCampos45(){
+  LENGTH=22
+
+  #CBU_NOVEDADES=$(echo registro)
+  LENGTH_CAMPO4=${#CBU_NOVEDADES}
+  LENGTH_CAMPO5=${#CBU_DESTINO}
+  echo "NOVEDADES $CBU_NOVEDADES, destino $CBU_DESTINO,"
+  
+  echo "length $LENGTH_CAMPO4 length $LENGTH_CAMPO5"
+  if [ $LENGTH_CAMPO4 -eq $LENGTH ]; then 
+    echo "el CBU_NOVEDADES tiene 22 digitos"
+  else
+    echo "el CBU_NOVEDADES no tiene 22 digitos"
+  fi
+
+  if [ $LENGTH_CAMPO5 -eq $LENGTH ]; then
+    echo "el CBU_DESTINO tiene 22 digitos"
+  else
+    echo "el CBU_DESTINO no tiene 22 digitos"
+  fi
+
+  if [ "$CBU_NOVEDADES" = "$CBU_DESTINO" ]; then
+    echo "Son iguales CBU_NOVEDADES y CBU_DESTINO"
+  else 
+    echo "no son iguales CBU_NOVEDADES y CBU_DESTINO"
+  fi
+}
+
+verificarBancos(){
+  COD_CBU_NOVEDADES=$(echo $CBU_NOVEDADES | sed "s/\(.\{3\}\)\(.*\)/\1/")
+  COD_CBU_DESTINO=$(echo $CBU_DESTINO | sed "s/\(.\{3\}\)\(.*\)/\1/")
+  echo "COD_CBU_NOVEDADES $COD_CBU_NOVEDADES, COD_CBU_DESTINO $COD_CBU_DESTINO"
+  NOVEDADES_BUSCADO=$(.$NOVEDADES/buscar_banco.sh -c /bamae.csv $COD_CBU_NOVEDADES)
+  DESTINO_BUSCADO=$(.$NOVEDADES/buscar_banco.sh -c ./bamae.csv $COD_CBU_DESTINO)
+  if [ "$NOVEDADES_BUSCADO" != "false" ]; then
+    echo "NOVEDADES validado"
+  else
+    echo "NOVEDADES no validado"
+  fi
+  if [ "$DESTINO_BUSCADO" != "false" ];then
+    echo "Destino validado"
+  else 
+    echo "Destino no validado"
+  fi
 }
 
 verificarFormato(){
-  FECHAS=$(sed '1d' $ORIGEN/$archivo | cut -d ";" -f 1)
-  for fecha in $FECHAS; do 
-  echo $fecha
-done
-
+  verificarFechas 
+  verificarCampos23
+  verificarCampos45
+  verificarBancos
 }
 
+parsear(){
+  FECHA=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\1/" | sed "s/;//g" )
+  MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\2/" | sed "s/;//g" ) 
+  ESTADO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\3/" | sed "s/;//g" )
+  CBU_NOVEDADES=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\4/" | sed "s/;//g" )
+  CBU_DESTINO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)([0-9]*)(.*$)/\5/" | sed "s/;//g" )
+}
 #verificarAmbiente
-
+echo "hola"
 #Ordeno los archivos cronologicamente (mas antiguo al mas reciente) y los proceso
-archivosOrdenados=$(ls -A "$ORIGEN" | sed 's-^\(.*\)\([0-9]\{8\}\)\.csv$-\2\1.csv-g' | sort | sed 's-^\([0-9]\{8\}\)\(.*\)\.csv$-\2\1.csv-g')
+archivosOrdenados=$(ls -A "$NOVEDADES" | sed 's-^\(.*\)\([0-9]\{8\}\)\.csv$-\2\1.csv-g' | sort | sed 's-^\([0-9]\{8\}\)\(.*\)\.csv$-\2\1.csv-g')
 for archivo in $archivosOrdenados ; do
-  VALIDO="true"
-  echo -------------------------------------------
   echo $archivo
+  echo $NOVEDADES
+  echo -------------------------------------------
+  #echo $registro
   #verificarCantidadRegistros
   #verificarMonto
-  verificarFormato
-  if [ $VALIDO="true" ]; then
-    echo "archivo Valido"
-  else
-    echo "archivo no valido"
-  fi
+  #
+  VALIDO="true"
+  HEADER="false"
+  SUMA=0
+  CONTADOR=0
+  
+  while read -r REGISTRO; do
+    echo "Registro $REGISTRO"
+    
+    parsear
 
+    if [ $HEADER = "false" ]; then 
+      echo "header: $FECHA, $MONTO"
+      #Ya que el header la posicion de estos campos se encuentra en la misma que 
+      #la fecha y el monto
+      HEADER_CANTIDAD_REGISTROS=$FECHA
+      HEADER_MONTO_TOTAL=$MONTO
+      HEADER="true"
+    else
+      echo $FECHA,$MONTO,$ESTADO,$CBU_NOVEDADES,$CBU_DESTINO
+      SUMA=$(echo "$MONTO + $SUMA" | bc)
+      let CONTADOR=$CONTADOR+1
+      verificarFormato
+    fi
+    if [ $VALIDO="true" ]; then
+      echo "archivo Valido"
+    else
+     echo "archivo no valido"
+    fi
+  done <"$NOVEDADES$archivo"
+  echo "el monto sumado es $SUMA"
+  echo "la contidad de registros sumados $CONTADOR"
 done
-
-#FinProceso $cantidadArchivosProcesados $cantidadArchivosRechazados
