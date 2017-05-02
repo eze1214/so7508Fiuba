@@ -17,7 +17,7 @@ setVariables(){
     echo -e ".... Estableciendo la variable GRUPO: $GRUPO "
     
     export BINARIOS=`grep -A 0 BINARIOS $CONFIG | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
-    echo -e ".... Estableciendo la variable BINARIOS: $BINARIOS "fi
+    echo -e ".... Estableciendo la variable BINARIOS: $BINARIOS "
 
     export MAESTROS=`grep -A 0 MAESTROS $CONFIG | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
     echo -e ".... Estableciendo la variable MAESTROS: $MAESTROS "
