@@ -1,18 +1,15 @@
 #!/bin/bash
 
-#GRUPO=~/grupo05
-
-#    CONFIG="$GRUPO/dirconf/config.cnf"
-#    export BINARIOS=`grep -A 0 BINARIOS $CONFIG | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
-
-#source $BINARIOS/inicializaciones.sh
-
 
 if [ -f /tmp/daemon.pid ]; then
-    echo "El demonio ya existe"
+    PID=$(cat /tmp/daemon.pid )
+    echo "El demonio está en ejecución, PID: $PID"
     exit 3
 fi
 
-#export GRUPO5_MAESTRO_DE_BANCOS="maestro_de_bancos.csv"
-`$BINARIOS/daemon.sh  & echo $! >> /tmp/daemon.pid`
+$BINARIOS/daemon.sh  & echo $! >> /tmp/daemon.pid
 
+# Leyendo el archivo obtengo el PID --> así es mucho más facil matarlo
+PID=$(cat /tmp/daemon.pid)
+
+echo -e ".. Demonio Corriendo ..  PID: $PID"

@@ -10,11 +10,19 @@
 
 
 #export GRUPO5_MAESTRO_DE_BANCOS="maestro_de_bancos.csv"
+if [ ! -f /tmp/daemon.pid ]; then
+    echo "El demonio NO está corriendo "
+    exit 3
+fi
 
 PID=$(cat /tmp/daemon.pid )
 
-kill -9 $PID
+kill -9 $PID 2> /dev/null
 
-echo " stop PID: $PID .. "
+if [ $? -eq 0 ]; then
+  echo "..Deteniendo Demonio, PID: $PID .. "
+else
+  echo "El Demonio NO está corriendo "
+fi
 
-rm tmp/daemon.pid > /dev/null
+rm /tmp/daemon.pid 2> /dev/null
