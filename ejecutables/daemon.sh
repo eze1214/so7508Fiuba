@@ -43,14 +43,20 @@ checkNovedades(){
   for entry in "$NOVEDADES"/*
   do
     if [ -s $entry ]; then
-      validateFilename
-      if [ $? -eq 0 ]; then
-        $BINARIOS/moverArchivos.sh $entry $ACEPTADOS
+      check_file=$(file -0 "$entry" | cut -d $'\0' -f2)
+      if [[ $check_file == *"text"* ]]; then
+        validateFilename
+        if [ $? -eq 0 ]; then
+          $BINARIOS/moverArchivos.sh $entry $ACEPTADOS
+        else
+          $BINARIOS/moverArchivos.sh $entry $RECHAZADOS
+        fi
       else
+	$BINARIOS/log.sh -w "Validar Archivo" -m "El archivo $entry no es de texto" -e $LOG_DAEMON
         $BINARIOS/moverArchivos.sh $entry $RECHAZADOS
       fi
     else
-      $BINARIOS/log.sh -w "Validar Archivo"  -m "Archivo vacío: $entry " -e $LOG_DAEMON
+      $BINARIOS/log.sh -w "Validar Archivo" -m "Archivo vacío: $entry " -e $LOG_DAEMON
       $BINARIOS/moverArchivos.sh $entry $RECHAZADOS
     fi
   done
