@@ -179,7 +179,7 @@ verificarFormato(){
 
 parsear(){
   FECHA=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\1/" | sed "s/;//g" )
-  MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\2/" | sed "s/;//g" ) 
+  MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\2/" | sed "s/;//g" | sed "s/,/\./" ) 
   ESTADO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\3/" | sed "s/;//g" )
   CBU_NOVEDADES=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)(.*$)/\4/" | sed "s/;//g" )
   CBU_DESTINO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*;)(.*;)(.*;)([0-9]*)(.*$)/\5/" | sed "s/;//g" )
@@ -244,12 +244,12 @@ verificarAmbiente
     fi
     
   done <"$NOVEDADES/$archivo"
-  echo "el monto sumado es $SUMA"
+  echo "el monto sumados es $SUMA"
   echo "la cantidad de registros sumados $CONTADOR"
   if [ "$SUMA" != "TOTAL_MONTO" ]; then
     VALIDO="false"
   fi
-  if [ "$CONTADOR" != "$TOTAL_REGISTROS"]; then
+  if [ "$CONTADOR" != "$TOTAL_REGISTROS" ]; then
     VALIDO="false"
   fi
   if [ $VALIDO="true" ]; then
