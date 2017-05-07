@@ -76,7 +76,9 @@ darFormatoValido(){
 
 ingresarDirectorios(){
 	read -p "Ingrese el nombre del directorio de archivos maestros ($MAESTROS_DEFAULT): " MAESTROS	
-	MAESTROS="${MAESTROS:-$MAESTROS_DEFAULT}"	read -p "Ingrese el nombre del directorio de archivos de novedades ($NOVEDADES_DEFAULT): " NOVEDADES
+	MAESTROS="${MAESTROS:-$MAESTROS_DEFAULT}"	
+
+	read -p "Ingrese el nombre del directorio de archivos de novedades ($NOVEDADES_DEFAULT): " NOVEDADES
 	NOVEDADES="${NOVEDADES:-$NOVEDADES_DEFAULT}"
 
 	read -p "Ingrese el nombre del directorio de archivos ejecutables ($EJECUTABLES_DEFAULT): " EJECUTABLES
@@ -129,6 +131,7 @@ validarDirectorios (){
 	#Este contador debe ser igual a la cantidad de elementos del vector
 	#dado que al compararse todos los elementos con todos se comparan los que son iguales
 	
+	seleccionoCONFDIR=0
 	contador=0 #Primer Elemento a comparar
 	directorios1=(${CONFDIR} ${MAESTROS} ${NOVEDADES} ${EJECUTABLES} ${VALIDADOS} ${REPORTES} ${ACEPTADOS} ${RECHAZADOS} ${LOG})
 	error=0
@@ -144,6 +147,10 @@ validarDirectorios (){
 	len=${#directorios1[@]}
 	if [ $contador -gt $len ]; then
 		error=1
+	fi
+
+	if [ "$MAESTROS" = "$CONFDIR" ] || [ "$NOVEDADES" = "$CONFDIR" ] || [ "$EJECUTABLES" = "$CONFDIR" ] || [ "$VALIDADOS" = "$CONFDIR" ] || [ "$REPORTES" = "$CONFDIR" ] || [ "$ACEPTADOS" = "$CONFDIR" ] || [ "$RECHAZADOS" = "$CONFDIR" ] || [ "$RECHAZADOS" = "$LOG" ]; then
+		seleccionoCONFDIR=1
 	fi
 }
 
@@ -168,8 +175,11 @@ definirDirectorios (){
    			validarDirectorios
    			if [ $error = 1 ]; then
   				OPCION="n"
-  				echo -e "\n Error no se puede ingresar directorios con nombres duplicados"
+  				echo -e "\nError no se puede ingresar directorios con nombres duplicados"
   				./log.sh -w INSTALADOR -m "Se ingresaron nombres duplicados en los directorios" -e $ARCH_LOG		
+  			fi
+  			if [ $seleccionoCONFDIR = 1 ]; then
+  				echo -e "No se puede elegir como nombre de directorio $CONFDIR\n"
   			fi
 		done
 	else
