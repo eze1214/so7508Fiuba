@@ -62,38 +62,52 @@ copiarArchivos (){
 	fi
 }
 
+darFormatoValido(){
+	#Se encarga de eliminar las barras / colacadas de mas
+	MAESTROS=$(echo $MAESTROS | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	NOVEDADES=$(echo $NOVEDADES | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	EJECUTABLES=$(echo $EJECUTABLES | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	VALIDADOS=$(echo $VALIDADOS | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	REPORTES=$(echo $REPORTES | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	ACEPTADOS=$(echo $ACEPTADOS | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	RECHAZADOS=$(echo $RECHAZADOS | sed "s/\/*//" | sed -r "s/\/+/\//g")
+	LOG=$(echo $LOG | sed "s/\/*//" | sed -r "s/\/+/\//g")
+}
 
 ingresarDirectorios(){
 	read -p "Ingrese el nombre del directorio de archivos maestros ($MAESTROS_DEFAULT): " MAESTROS	
-	MAESTROS="${MAESTROS:-$MAESTROS_DEFAULT}"
-	MAESTROS_DEFAULT=$MAESTROS
-
-	read -p "Ingrese el nombre del directorio de archivos de novedades ($NOVEDADES_DEFAULT): " NOVEDADES
+	MAESTROS="${MAESTROS:-$MAESTROS_DEFAULT}"	read -p "Ingrese el nombre del directorio de archivos de novedades ($NOVEDADES_DEFAULT): " NOVEDADES
 	NOVEDADES="${NOVEDADES:-$NOVEDADES_DEFAULT}"
-	NOVEDADES_DEFAULT=$NOVEDADES
 
 	read -p "Ingrese el nombre del directorio de archivos ejecutables ($EJECUTABLES_DEFAULT): " EJECUTABLES
 	EJECUTABLES="${EJECUTABLES:-$EJECUTABLES_DEFAULT}"
-	EJECUTABLES_DEFAULT=$EJECUTABLES
 
 	read -p "Ingrese el nombre del directorio de archivos de validados ($VALIDADOS_DEFAULT): " VALIDADOS
 	VALIDADOS="${VALIDADOS:-$VALIDADOS_DEFAULT}"
-	VALIDADOS_DEFAULT=$VALIDADOS
 
 	read -p "Ingrese el nombre del directorio de archivos de reportes ($REPORTES_DEFAULT): " REPORTES
 	REPORTES="${REPORTES:-$REPORTES_DEFAULT}"
-	REPORTES_DEFAULT=$REPORTES
 
 	read -p "Ingrese el nombre del directorio de archivos de aceptados ($ACEPTADOS_DEFAULT): " ACEPTADOS
 	ACEPTADOS="${ACEPTADOS:-$ACEPTADOS_DEFAULT}"
-	ACEPTADOS_DEFAULT=$ACEPTADOS
 
 	read -p "Ingrese el nombre del directorio de archivos de rechazados ($RECHAZADOS_DEFAULT): " RECHAZADOS
 	RECHAZADOS="${RECHAZADOS:-$RECHAZADOS_DEFAULT}"
-	RECHAZADOS_DEFAULT=$RECHAZADOS
 
 	read -p "Ingrese el nombre del directorio de archivos de log ($LOG_DEFAULT): " LOG
 	LOG="${LOG:-$LOG_DEFAULT}"
+
+	#Elimina las // que se coloquen
+	darFormatoValido
+
+	#Almaceno los directorios
+	MAESTROS_DEFAULT=$MAESTROS
+	NOVEDADES_DEFAULT=$NOVEDADES
+	EJECUTABLES_DEFAULT=$EJECUTABLES
+	VALIDADOS_DEFAULT=$VALIDADOS
+	REPORTES_DEFAULT=$REPORTES
+	ACEPTADOS_DEFAULT=$ACEPTADOS
+	RECHAZADOS_DEFAULT=$RECHAZADOS
 	LOG_DEFAULT=$LOG
 }
 
