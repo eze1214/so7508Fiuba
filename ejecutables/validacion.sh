@@ -205,7 +205,7 @@ parsear(){
 
 parsearHeader(){
   TOTAL_REGISTROS=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*$)/\1/" | sed "s/;//g" )
-  TOTAL_MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*$)/\2/" | sed "s/;//g" ) 
+  TOTAL_MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*$)/\2/" | sed "s/;//g" | sed "s/,/\./" |  sed  -r "s/(.+\.)(..)(.*)/\1\2/" | bc) 
 }
 
 generarSalida(){
@@ -269,7 +269,7 @@ generarSalida(){
   done <"$ORIGEN/$archivo"
   echo "el monto sumados es $SUMA" >/dev/null
   echo "la cantidad de registros sumados $CONTADOR" >/dev/null
-  if [ "$SUMA" != "TOTAL_MONTO" ]; then
+  if [ $SUMA != $TOTAL_MONTO ]; then
     VALIDO="false"
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Error en hash total. Sumatoria: $SUMA. Monto informado: $HEADER_MONTO_TOTAL." -e $LOG_VALIDADOR
   fi
@@ -277,7 +277,7 @@ generarSalida(){
     VALIDO="false"
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Error en cantidad de registros. Contados: $CONTADOR Cantidad informada: $HEADER_CANTIDAD_REGISTROS. " -e $LOG_VALIDADOR
   fi
-  if [ $VALIDO="true" ]; then
+  if [ $VALIDO = "true" ]; then
       echo "archivo Valido"
       $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo $Archivo es valido" -i $LOG_VALIDADOR
       generarSalida
