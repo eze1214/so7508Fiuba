@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MOVER="$BINDIR/MoverArchivo.sh"
-ORIGEN="$NOVEDADES"
+ORIGEN="$ACEPTADOS"
 LOG_VALIDADOR="$LOG/validador.log"
 
 ambienteInicializado(){
@@ -208,6 +208,15 @@ parsearHeader(){
   TOTAL_MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*$)/\2/" | sed "s/;//g" | sed "s/,/\./" |  sed  -r "s/(.+\.)(..)(.*)/\1\2/" | bc) 
 }
 
+verificarExistenciaArchivo(){
+  if [ -f $VALIDADOSDIR/proc/$archivo ]; then 
+    $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo $archivo: Ya fue procesado, enviado al directorio de rechazados " -e $LOG_VALIDADOR
+    $BINARIOS/log.sh -w "VALIDADOR"  -m "Fin de validador " -i $LOG_VALIDADOR
+    $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $RECHAZADOS)
+  fi
+  exit 1
+}
+
 generarSalida(){
   HEADER="false"
   while read -r REGISTRO; do
@@ -238,9 +247,10 @@ generarSalida(){
   done <"$ORIGEN/$archivo"
   $BINARIOS/log.sh -w "VALIDADOR"  -m "Se generaron todos los reportes para $archivo" -i $LOG_VALIDADOR
 }
-  verificarAmbiente
-  echo "valor $LOG_VALIDADOR"
   archivo=$1
+  verificarAmbiente
+  verificarExistenciaArchivo
+
   echo -------------------------------------------
   VALIDO="true"
   HEADER="false"
