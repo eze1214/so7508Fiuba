@@ -213,8 +213,8 @@ verificarExistenciaArchivo(){
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo $archivo: Ya fue procesado, enviado al directorio de rechazados " -e $LOG_VALIDADOR
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Fin de validador " -i $LOG_VALIDADOR
     $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $RECHAZADOS)
+    exit 1
   fi
-  exit 1
 }
 
 generarSalida(){
@@ -299,6 +299,7 @@ generarSalida(){
       $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $VALIDADOSDIR/proc)
     else
      echo "archivo no valido"
+     $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $RECHAZADOS)
      $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo $Archivo no valido se mueve al directorio de rechazados" -e $LOG_VALIDADOR
     fi
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Fin de VALIDADOR" -i $LOG_VALIDADOR
