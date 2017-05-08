@@ -6,8 +6,8 @@
 #    export BINARIOS=`grep -A 0 BINARIOS $CONFIG | sed "s/\(^.*\)\(=.*\)\(=.*\)\(=.*\)/\2/g" | sed s/=//g`
 
 #source $BINARIOS/inicializaciones.sh
-SRV="daemon"
-SERV=$(ps -e |grep ${SRV} |awk '{print $1}')
+SRV="$BINARIOS/daemon.sh"
+SERV=$(ps aux |grep ${SRV} |grep -v grep |awk '{print $2}')
 
 # echo "fin ${SERV}"
 
