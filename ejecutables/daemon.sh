@@ -2,7 +2,7 @@
 CICLO=0
 SLEEP_TIME=10s
 LOG_DAEMON="$LOG/daemon.log"
-
+VALIDADOR_NAME="$BINARIOS/validacion.sh"
 
 
 validateFilename(){
@@ -62,7 +62,6 @@ checkNovedades(){
   done
 }
 
-
 lista_de_bancos=$($BINARIOS/cargar_maestro_bancos.sh)
 while true
 do
@@ -75,7 +74,16 @@ do
     else
       echo "NO HAY NOVEDADES -> llamar a analizar ACEPTADOS"
     fi
+    
+    VALIDADOR_PID=$(ps aux |grep ${VALIDADOR_NAME} |grep -v grep |awk '{print $2}')
 
+    if [ ${VALIDADOR_PID} ]; then
+        $BINARIOS/log.sh -w "Llamar validador" -m "invocacion propuesta para el siguiente ciclo" -e $LOG_DAEMON
+    else
+	$($BINARIOS/validacion.sh)
+    fi
+
+    
     sleep $SLEEP_TIME
 
     CICLO=$((CICLO + 1))

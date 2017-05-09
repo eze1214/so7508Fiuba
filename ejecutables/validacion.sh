@@ -45,8 +45,8 @@ function verificarAmbiente(){
 
 verificarCantidadRegistros(){
   #leo el encabezado 
-  local cantidadRegistrosHEAD=$(head -1 $ORIGEN/$archivo | cut -d ";" -f 1)
-  local cantidadRegistros=$(wc -l $ORIGEN/$archivo | cut -d " " -f 1)
+  local cantidadRegistrosHEAD=$(head -1 $archivo | cut -d ";" -f 1)
+  local cantidadRegistros=$(wc -l $archivo | cut -d " " -f 1)
   let cantidadRegistros=cantidadRegistros-1 
   echo "$cantidadRegistrosHEAD - - $cantidadRegistros"
   if [ $cantidadRegistrosHEAD = $cantidadRegistros ]; then
@@ -60,8 +60,8 @@ verificarCantidadRegistros(){
 verificarMonto(){
   #Le borro el encabezado
   local suma=0
-  local sumaHEAD=$(head -1 $ORIGEN/$archivo | cut -d ";" -f 2)
-  contenido=$(sed '1d' $ORIGEN/$archivo | cut -d ";" -f 2)
+  local sumaHEAD=$(head -1 $archivo | cut -d ";" -f 2)
+  contenido=$(sed '1d' $archivo | cut -d ";" -f 2)
   echo -e "\n$contenido"
   for linea in $contenido; do
     echo $linea
@@ -84,7 +84,7 @@ verificarMonto(){
 
 verificarFechas(){
     #echo "Fecha procesada $FECHA, fecha extraida $($BINARIOS/extraer_fecha.sh $archivo)"
-    verificacionFecha=$($BINARIOS/validar_fecha2.sh $FECHA $($BINARIOS/extraer_fecha.sh $archivo))
+    verificacionFecha=$($BINARIOS/validar_fecha2.sh $FECHA $($BINARIOS/extraer_fecha.sh ${archivo##*/}))
     if [ "$verificacionFecha" = "true" ]; then 
       echo "fecha correcta" >/dev/null
       $BINARIOS/log.sh -w "VALIDADOR"  -m "Registro: $CONTADOR Fecha Validada" -i $LOG_VALIDADOR
@@ -209,10 +209,10 @@ parsearHeader(){
 }
 
 verificarExistenciaArchivo(){
-  if [ -f $VALIDADOSDIR/proc/$archivo ]; then 
+  if [ -f $VALIDADOSDIR/proc/${archivo##*/} ]; then 
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo $archivo: Ya fue procesado, enviado al directorio de rechazados " -e $LOG_VALIDADOR
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Fin de validador " -i $LOG_VALIDADOR
-    $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $RECHAZADOS)
+    $($BINARIOS/moverArchivos.sh $archivo $RECHAZADOS)
     exit 1
   fi
 }
@@ -244,14 +244,12 @@ generarSalida(){
       echo "$registroGuardar" >>$REPORTESDIR/transfer/$FECHA.txt
       $BINARIOS/log.sh -w "VALIDADOR"  -m "Guardado registro en $REPORTESDIR/transfer/$FECHA.txt" -i $LOG_VALIDADOR
     fi
-  done <"$ORIGEN/$archivo"
+  done <"$archivo"
   $BINARIOS/log.sh -w "VALIDADOR"  -m "Se generaron todos los reportes para $archivo" -i $LOG_VALIDADOR
 }
+  
+validarArchivo(){
   archivo=$1
-  verificarAmbiente
-  verificarExistenciaArchivo
-
-  echo -------------------------------------------
   VALIDO="true"
   HEADER="false"
   SUMA=0
@@ -276,7 +274,7 @@ generarSalida(){
       verificarFormato
     fi
     
-  done <"$ORIGEN/$archivo"
+  done <"$archivo"
   echo "el monto sumados es $SUMA" >/dev/null
   echo "la cantidad de registros sumados $CONTADOR" >/dev/null
   if [ $SUMA != $TOTAL_MONTO ]; then
@@ -296,10 +294,20 @@ generarSalida(){
       else
         mkdir $VALIDADOSDIR/proc
       fi
-      $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $VALIDADOSDIR/proc)
+      $($BINARIOS/moverArchivos.sh $archivo $VALIDADOSDIR/proc)
     else
      echo "archivo no valido"
-     $($BINARIOS/moverArchivos.sh $ORIGEN/$archivo $RECHAZADOS)
+     $($BINARIOS/moverArchivos.sh $archivo $RECHAZADOS)
      $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo $Archivo no valido se mueve al directorio de rechazados" -e $LOG_VALIDADOR
     fi
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Fin de VALIDADOR" -i $LOG_VALIDADOR
+}
+
+    verificarAmbiente
+    verificarExistenciaArchivo
+
+    list="$(find $ACEPTADOS -type f)"
+    for file in $list
+    do
+      validarArchivo $file
+    done

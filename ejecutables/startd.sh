@@ -1,6 +1,5 @@
 #!/bin/bash
 SRV="$BINARIOS/daemon.sh"
-DAEMON_NAME="grupo05_daemon"
 SERV=$(ps aux |grep ${SRV} |grep -v grep |awk '{print $2}')
 
 if [ ${SERV} ]; then
