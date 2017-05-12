@@ -1,4 +1,11 @@
 #!/bin/bash
+
+if [ -z $BINARIOS ]; then 
+   echo " Ambiente NO inicializado"
+   exit 4
+fi
+
+
 SRV="$BINARIOS/daemon.sh"
 SERV=$(ps aux |grep ${SRV} |grep -v grep |awk '{print $2}')
 

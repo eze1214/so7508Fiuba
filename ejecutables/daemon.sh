@@ -71,16 +71,15 @@ do
     #echo "Cantidad de archivos encontrados: $numFiles"
     if [ ${numFiles} -gt 0 ]; then
       checkNovedades
-    else
-      echo "NO HAY NOVEDADES -> llamar a analizar ACEPTADOS"
     fi
     
     VALIDADOR_PID=$(ps aux |grep ${VALIDADOR_NAME} |grep -v grep |awk '{print $2}')
 
     if [ ${VALIDADOR_PID} ]; then
-        $BINARIOS/log.sh -w "Llamar validador" -m "invocacion propuesta para el siguiente ciclo" -e $LOG_DAEMON
+        $BINARIOS/log.sh -w "Llamar validador" -m "invocacion propuesta para el siguiente ciclo" -i $LOG_DAEMON
     else
-	$($BINARIOS/validacion.sh)
+#	$($BINARIOS/validacion.sh)
+        $BINARIOS/validacion.sh > /dev/null 2>&1
     fi
 
     

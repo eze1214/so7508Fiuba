@@ -20,7 +20,7 @@ fi
 #PID=$(cat /tmp/daemon.pid )
 
 #kill -9 $PID 2> /dev/null
-kill -9 ${SERV} 2> /dev/null
+kill -9 ${SERV} > /dev/null
 
 if [ $? -eq 0 ]; then
   echo "..Deteniendo Demonio, PID: ${SERV} .. "

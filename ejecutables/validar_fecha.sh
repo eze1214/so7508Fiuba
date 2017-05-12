@@ -3,7 +3,7 @@ regex="^[0-9]{4}[0-1][0-9][0-3][0-9]"
 #echo "entrada = $1"
 if [[ $1 =~ $regex  ]]
 	then
-	date "+%Y%mm%dd" -d "$1" > /dev/null 2>&1	
+	date "+%Y%m%d" -d "$1" > /dev/null 2>&1	
 	is_valid=$?
 	#echo "is_valid = $is_valid"
 	date_argumento=$1
@@ -15,7 +15,7 @@ if [[ $1 =~ $regex  ]]
 	date_hoy=`date --date="now" +%Y%m%d`
 	date_hoy="$(date +%s -d $date_hoy)"
 
-	if [ $is_valid == 0 ] && [ $date_15_dias -lt $date_argumento ] && [ $date_argumento -lt $date_hoy ]
+	if [ $is_valid == 0 ] && [ $date_15_dias -le $date_argumento ] && [ $date_argumento -le $date_hoy ]
 		then
 		valido="true"
 	fi
