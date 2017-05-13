@@ -47,7 +47,8 @@ $filtroImporteMaxSelection = "*";
 # Seteo las variables en base a la informacion que brinda el entorno
 sub parseConfig{
 
-	$repoDir= "/home/ubuntu1610/grupo05/reportes";
+	#$repoDir= "/home/ubuntu1610/grupo05/reportes";
+	$repoDir=$ENV{REPORTESDIR};
 	#$repoDir= $ENV{"GRUPO5_REPORTESDIR"};#"/home/ubuntu1610/grupo05/reportes";
 
 	if($repoDir eq "")
