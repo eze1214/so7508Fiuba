@@ -46,18 +46,19 @@ setVariables(){
 }
 
 
-startDaemon(){    
+startDaemon(){
+    $BINARIOS/startd.sh    
     # Intento eliminar el archivo temporal en el cual voy a guardar la pid del demonio
-    rm /tmp/daemon.pid 2> /dev/null
-    
+#    rm /tmp/daemon.pid 2> /dev/null
+#    
     # Corro el demonio en segundo plano y además gurdo PID en el archivo 
   #  $BINARIOS/daemon.sh > /dev/null 2> /dev/null & echo $! >> /tmp/daemon.pid
-    $BINARIOS/daemon.sh & echo $! >> /tmp/daemon.pid
-    
+#    $BINARIOS/daemon.sh & echo $! >> /tmp/daemon.pid
+#    
     # Leyendo el archivo obtengo el PID --> así es mucho más facil matarlo
-    PID=$(cat /tmp/daemon.pid)
-           
-    echo -e ".. Demonio Corriendo ..  PID: $PID"
+#    PID=$(cat /tmp/daemon.pid)
+#           
+#    echo -e ".. Demonio Corriendo ..  PID: $PID"
 }
 
 
