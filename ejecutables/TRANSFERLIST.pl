@@ -7,10 +7,15 @@ use Scalar::Util qw(looks_like_number);
 %transferenciasOrigenDestinoHash;
 %transferenciasOrigenFechaHash;
 %transferenciasDestinoFechaHash;
-%cbuOrigenDestinoHash;
+%cbuOrigenHash;
+%cbuDestinoHash;
+%rankingRecibieronHash;
+%rankingEmitieronHash;
+
 
 @arrayResultQuery=();
 $lastId =0;
+
 
 # Variables de argumentos.
 $help = 0;
@@ -42,7 +47,7 @@ $filtroImporteMaxSelection = "*";
 # Seteo las variables en base a la informacion que brinda el entorno
 sub parseConfig{
 
-	$repoDir=$ENV{REPORTESDIR}; 
+	$repoDir= "/home/ubuntu1610/grupo05/reportes";
 	#$repoDir= $ENV{"GRUPO5_REPORTESDIR"};#"/home/ubuntu1610/grupo05/reportes";
 
 	if($repoDir eq "")
@@ -55,7 +60,7 @@ sub parseConfig{
 		$transfer = $repoDir."/transfer/";
 		$balancesDir = $repoDir. "/balances/";
 		$listadosDir = $repoDir. "/listados/";
-		$rankingDir = $repoDir. "/ranking/";	
+		$rankingDir = $repoDir. "/ranking/";
 	}
 }
 
@@ -64,8 +69,8 @@ sub parseArguments()
 {
 	@myArgs = @ARGV;
 	GetOptions('help|h' => \$help, 
-				"query|c" => \$fileIn,
-				);
+	"query|c" => \$fileIn,
+	);
 	if( $help == 1 ) 
 	{
 		# Si encuentra -h imprime ayuda y sale
@@ -78,20 +83,28 @@ sub parseArguments()
 		mainLoadFilteredTransfer();
 	}
 
+	if($fileIn <> 1 or $help <> 1)
+	{
+		showErrorSelection();
+		showHelpMenu();
+		exit 1;
+	}
+
 }
 
 #cargo los archivos de transferencias según el filtro que se indique
 sub mainLoadFilteredTransfer()
 {
+	showFilterType();
+	while($statFilterType <1 or $statFilterType >3)
+	{
+		showErrorSelection();
 		showFilterType();
-		while($statFilterType <1 or $statFilterType >3)
-		{
-			showErrorSelection();
-			showFilterType();
-		}
-		processFilterTypeSelection();
-		makeStatQuery();
-		showQuerySelection();
+	}
+	processFilterTypeSelection();
+	makeStatQuery();
+	blankAllQuerySelection();
+	showQuerySelection();
 }
 
 
@@ -156,12 +169,12 @@ sub processFilterTypeSelection()
 				}
 			}
 		}
-
 	}
 	elsif($statFilterType == 3)
 	{
 		$rangeOfaniomes[0]="*";
-	}else
+	}
+	else
 	{
 		$statFilterType=0;
 	}
@@ -174,7 +187,6 @@ sub processFilterTypeSelection()
 #Acá cargo todas las transferencias en los hash para después mostrarlas según los filtros
 sub makeStatQuery()
 {
-	print "alallala\n";
 	opendir(DIR,$transfer);
 	my @filesOFTP = readdir(DIR);
 	my @workFiles=();
@@ -182,7 +194,7 @@ sub makeStatQuery()
 	foreach(@filesOFTP)
 	{
 		my $aFile = $_;
-					print "un archivo $aFile\n";
+		print "un archivo $aFile\n";
 
 		if(fileMatchAnioMesFilter($aFile))
 		{
@@ -190,7 +202,6 @@ sub makeStatQuery()
 			print "un archivo $aFile adentro\n";
 		}
 	}
-
 	foreach(@workFiles)
 	{
 		my $aFile = $_;
@@ -236,16 +247,31 @@ sub makeStatQuery()
 
 				if(not exists $cbuOrigenDestinoHash{$cbuOrigen})
 				{
-					$cbuOrigenDestinoHash{$cbuOrigen}{$cbuDestino}=();
+					$cbuOrigenDestinoHash{$fechaTransf}{$cbuOrigen}=();
 				}
 				elsif(not exists $cbuOrigenDestinoHash{$cbuOrigen}{$cbuDestino})
 				{
-					$cbuOrigenDestinoHash{$cbuOrigen}{$cbuDestino}=();
+					$cbuOrigenDestinoHash{$fechaTransf}{$cbuDestino}=();
 				}
+
+				if(not exists $rankingRecibieronHash{$eDestino})
+				{
+					$rankingRecibieronHash{$eDestino}=0;
+				}
+
+				if(not exists $rankingEmitieronHash{$eOrigen})
+				{
+					$rankingEmitieronHash{$eOrigen}=0;
+				}
+
 				push @{$transferenciasOrigenDestinoHash{$eOrigen}{$eDestino}}, $line;
 				push @{$transferenciasOrigenFechaHash{$eOrigen}{$fechaTransf}}, $line;
 				push @{$transferenciasDestinoFechaHash{$eDestino}{$fechaTransf}}, $line;
-				push @{$cbuOrigenDestinoHash{$cbuOrigen}{$cbuDestino}}, $line;
+				push @{$cbuOrigenHash{$fechaTransf}{$cbuOrigen}}, $line;
+				push @{$cbuDestinoHash{$fechaTransf}{$cbuDestino}}, $line;
+
+				$rankingRecibieronHash{$eDestino} = $rankingRecibieronHash{$eDestino} + $importe;
+				$rankingEmitieronHash{$eOrigen} = $rankingEmitieronHash{$eOrigen} + $importe;
 			}
 		}
 		close (F_WORKFILEPATH);
@@ -312,6 +338,19 @@ sub fileMatchAnioMesFilter()
 
 ########################################################
 ################## FILTROS #############################
+sub blankAllQuerySelection()
+{
+	$querySelectionChoice = "*";
+	$filtroFuentesSelection = "*";
+	$filtroEntidadOrigenSelection = "*";
+	$filtroEntidadDestinoSelection = "*";
+	$filtroEstadoSelection = "*";
+	$filtroFechasSelection[0] = "*";
+	$filtroImporteMinSelection = "0";
+	$filtroImporteMaxSelection = "99999999";
+}
+
+
 
 
 sub showQuerySelection()
@@ -367,41 +406,41 @@ print "\n\tSELECCION DE CONSULTA
 		}
 		elsif($typeOfListSelection < 7)
 		{
-			showDetailsMenu();
-			if($typeOfDetailSelection == 4)
+			if($typeOfListSelection == 1 or $typeOfListSelection == 2 or $typeOfListSelection ==4)
 			{
-				exit 0;
-			}
-			elsif($typeOfDetailSelection > 4)
-			{
-				showErrorSelection();
-			}
-			elsif($typeOfDetailSelection <3)
-			{
-				showOutputMenu();
-				if($typeOfOutputSelection == 5)
+				showDetailsMenu();
+				if($typeOfDetailSelection == 4)
 				{
 					exit 0;
 				}
-				elsif($typeOfListSelection > 5)
+				elsif($typeOfDetailSelection > 4)
 				{
 					showErrorSelection();
 				}
-				elsif($typeOfListSelection < 4)
-				{
-					getQuery();
-					showQueryResult();
-				}
+			}
+			
+			showOutputMenu();
+			if($typeOfOutputSelection == 5)
+			{
+				exit 0;
+			}
+			elsif($typeOfOutputSelection > 5)
+			{
+				showErrorSelection();
+			}
+			elsif($typeOfOutputSelection < 4)
+			{
+				getQuery();
+				showQueryResult();
+				blankAllQuerySelection();
 			}
 		}
 	}
 	else
 	{
 		exit 0;
-	}		
-
+	}	
 	showQuerySelection();
-
 }
 
 
@@ -417,7 +456,7 @@ print "\n\tINGRESE LAS FUENTES SEPARADAS POR ESPACIOS
 	@fuentesValidadas=();
 	foreach my $unaFuente (@fuentesSel)
 	{
-			push @fuentesValidadas, $unaFuente;		
+		push @fuentesValidadas, $unaFuente;	
 	}
 
 	if(scalar(@fuentesValidadas) == 0)
@@ -427,6 +466,34 @@ print "\n\tINGRESE LAS FUENTES SEPARADAS POR ESPACIOS
 	}
 
 }
+
+
+sub validarFuente
+{
+	my ($aFuente) = @_;
+	if($filtroFuentesSelection eq '*')
+	{
+		return 1;
+	}
+	else
+	{
+		$encontroMatch = 0;
+		$i=0;
+		while( $encontroMatch ==0 && $i < scalar(@fuentesValidadas))
+		{
+			if($aFuente eq $fuentesValidadas[$i])
+			{
+				return 1;
+			}
+			else
+			{
+				$i++;
+			}
+		}
+		return 0;
+	}
+}
+
 
 sub showEntidadOrigenFilterMenu()
 {
@@ -440,7 +507,7 @@ sub showEntidadOrigenFilterMenu()
 	@entidadesOrigenValidadas=();
 	foreach my $unaEntidadOrigen (@entidadesOrgenSel)
 	{
-			push @entidadesOrigenValidadas, $unaEntidadOrigen;		
+		push @entidadesOrigenValidadas, $unaEntidadOrigen;	
 	}
 
 	if(scalar(@entidadesOrigenValidadas) == 0)
@@ -449,6 +516,34 @@ sub showEntidadOrigenFilterMenu()
 		$filtroEntidadOrigenSelection = "*";
 	}
 }
+
+
+sub validarEntidadOrigen
+{
+	my ($unaEntidadOrigen) = @_;
+	if($filtroEntidadOrigenSelection eq '*')
+	{
+		return 1;
+	}
+	else
+	{
+		$encontroMatch = 0;
+		$i=0;
+		while( $encontroMatch ==0 && $i < scalar(@entidadesOrigenValidadas))
+		{
+			if($unaEntidadOrigen eq $entidadesOrigenValidadas[$i])
+			{
+				return 1;
+			}
+			else
+			{
+				$i++;
+			}
+		}
+		return 0;
+	}
+}
+
 
 
 sub showEntidadDestinoFilterMenu()
@@ -463,13 +558,40 @@ sub showEntidadDestinoFilterMenu()
 	@entidadesDestinoValidadas=();
 	foreach my $unaEntidadDestino (@entidadesDestinoSel)
 	{
-			push @entidadesDestinoValidadas, $unaEntidadDestino;		
+	push @entidadesDestinoValidadas, $unaEntidadDestino;	
 	}
 
 	if(scalar(@entidadesDestinoValidadas) == 0)
 	{
 		showErrorSelection();
 		$filtroEntidadDestinoSelection = "*";
+	}
+}
+
+
+sub validarEntidadDestino
+{
+	my ($unaEntidadDestino) = @_;
+	if($filtroEntidadDestinoSelection eq '*')
+	{
+		return 1;
+	}
+	else
+	{
+		$encontroMatch = 0;
+		$i=0;
+		while( $encontroMatch ==0 && $i < scalar(@entidadesDestinoValidadas))
+		{
+			if($unaEntidadDestino eq $entidadesDestinoValidadas[$i])
+			{
+				return 1;
+			}
+			else
+			{
+				$i++;
+			}
+		}
+		return 0;
 	}
 }
 
@@ -488,7 +610,7 @@ sub showEstadoFilterMenu()
 	{
 		if($unEstado eq "Anulada" or $unEstado eq "Pendiente")
 		{
-			push @estadosValidados, $unEstado;		
+			push @estadosValidados, $unEstado;	
 		}
 	}
 
@@ -499,6 +621,31 @@ sub showEstadoFilterMenu()
 	}
 }
 
+sub validarEstado
+{
+	my ($unEstado) = @_;
+	if($filtroEstadoSelection eq '*')
+	{
+		return 1;
+	}
+	else
+	{
+		$encontroMatch = 0;
+		$i=0;
+		while( $encontroMatch ==0 && $i < scalar(@estadosValidados))
+		{
+			if($unEstado eq $estadosValidados[$i])
+			{
+				return 1;
+			}
+			else
+			{
+				$i++;
+			}
+		}
+		return 0;
+	}
+}
 
 
 sub	showFechaTransfFilterMenu()
@@ -583,6 +730,59 @@ print "\n\tTIPO DE FILTRO
 
 }
 
+sub validarFiltroFecha()
+{
+
+	if($fechaTransfFilterType ==3)
+	{
+		return 1;
+	}
+	else
+	{
+		my ($unaFechaParaValidar) = @_;
+		my $aDate= substr $fileName, 0,8;
+		my $anio= substr $aDate, 0,4;
+		my $mes = substr $aDate, 4,2;
+		my $dia = substr $aDate, 6,2;
+
+		my $rangeAnio= substr $fechasTransfValidados[0], 0,4;
+		my $rangeMes = substr $fechasTransfValidados[0], 4,2;
+		my $rangeDia = substr $fechasTransfValidados[0], 6,2;
+		print "Fecha $aDate\n";
+		print "Anio $anio\n";
+		print "Mes $mes\n";
+		print "dia $dia\n";
+		print "RangeAnio $rangeAnio\n";
+		print "RangeMes $rangeMes\n\n";
+
+		if($fechaTransfFilterType ==1)
+		{	
+			if ($rangeAnio eq $anio and $rangeMes eq $mes and $rangeDia eq $dia)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			my $rangeAnioMax= substr $fechasTransfValidados[1], 0,4;
+			my $rangeMesMax = substr $fechasTransfValidados[1], 4,2;
+			my $rangeDiaMax = substr $fechasTransfValidados[1], 6,2;
+			if ($rangeAnio <= $anio and $rangeMes <= $mes and $rangeDia <= $dia and $anio <= $rangeAnioMax and $mes <= $rangeMesMax and $dia <= $rangeDiaMax)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}	
+	}
+}
+
 #Pido información del importe mínimo
 sub showImporteFilterMenu()
 {
@@ -594,15 +794,12 @@ print "\n\tINGRESE EL IMPORTE MINIMO (El mínimo es 0)
 	if($filtroImporteMinSelection =~ /[0-9]/)
 	{
 		showImporteMaxFilterMenu()
-	}else
+	}
+	else
 	{
 		showErrorSelection();
 		$filtroImporteMinSelection = "0";
 	}
-	
-
-
-
 }
 
 
@@ -621,10 +818,23 @@ print "\n\tINGRESE EL IMPORTE MAXIMO
 	{
 		showErrorSelection();
 		$filtroImporteMinSelection = "0";
-		$filtroImporteMaxSelection = "*";
+		$filtroImporteMaxSelection = "99999999";
 	}
 }
 
+
+sub validarFiltroImporte()
+{
+	my ($unImporte) = @_;
+	if( $filtroImporteMinSelection <= $unImporte and $unImporte <= $filtroImporteMaxSelection )
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}	
+}
 
 ####################################################################
 ################## GENERACION DE CONSULTAS #########################
@@ -675,12 +885,30 @@ print "\n\tOPCIONES DE LISTADO
 
 sub getQuery()
 {
-	getQueryEntidadesOrigen();
-	getQueryEntidadesDestino();
-	getQueryBalancePorEntidad();
-	getQueryBalanceEntreEntidades();
-	getQueryPorCBU();
-	showRanking();
+	if($typeOfListSelection == 1)
+	{
+		getQueryEntidadesOrigen();
+	}
+	elsif($typeOfListSelection == 2)
+	{
+		getQueryEntidadesDestino();
+	}
+	elsif($typeOfListSelection == 3)
+	{
+		getQueryBalancePorEntidad();
+	}
+	elsif($typeOfListSelection == 4)
+	{
+		getQueryBalanceEntreEntidades();
+	}
+	elsif($typeOfListSelection == 5)
+	{
+		getQueryPorCBU();
+	}
+	elsif($typeOfListSelection == 6)
+	{
+		showRanking();
+	}	
 }
 
 sub getQueryEntidadesOrigen()
@@ -690,7 +918,7 @@ sub getQueryEntidadesOrigen()
 	-----------------------------------------------------------------------\n";
 	print "\tSELECCION ";
 	chomp($queryEntidadOrigenSelection = <>);
-
+	@arrayResultQuery=();
 	my @entidadesOrigenSel = split(' ',$queryEntidadOrigenSelection);
 	@entidadesOrigenAListar=();
 	foreach my $unaEntidadOrigen (@entidadesOrigenSel)
@@ -699,31 +927,60 @@ sub getQueryEntidadesOrigen()
 		{
 			push @entidadesOrigenAListar, $unaEntidadOrigen;
 		}
-
 	}
 
 	foreach my $unaEntidadOrigenAListar (@entidadesOrigenAListar)
 	{
-		print "ENTIDAD: $unaEntidadOrigenAListar\n";
+		#print "ENTIDAD: $unaEntidadOrigenAListar\n";
+		$aLineResult="ENTIDAD: $unaEntidadOrigenAListar\n";
+		push @arrayResultQuery, $aLineResult;
 		$totalGeneral=0;
 		foreach my $unaFechaDeTransferencia (sort keys %{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}})
 		{
 			#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
 			$subtotalDelDia=0;
-			print "FECHA: $unaFechaDeTransferencia\n";
-			printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+			#print "FECHA: $unaFechaDeTransferencia\n";
+			$aLineResult="FECHA: $unaFechaDeTransferencia\n";
+			push @arrayResultQuery, $aLineResult;
+			
+			#printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+			
+			if($typeOfDetailSelection == 1)
+			{
+				$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+				push @arrayResultQuery, $aLineResult;
+			}
+			elsif($typeOfDetailSelection == 2)
+			{
+				$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
+				push @arrayResultQuery, $aLineResult;
+	    	}
+
 	    	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}})
 	    	{
-	    		($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-	    		#if() VALIDACIONES DE FILTRO
-	    		$subtotalDelDia=$subtotalDelDia+$importe;
-	    		#print "$unaTransferencia\n";
-	    		printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+		    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
+		    	{
+		    		$subtotalDelDia=$subtotalDelDia+$importe;
+
+			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+								
+					if($typeOfDetailSelection == 1)
+					{
+						$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+						push @arrayResultQuery, $aLineResult;
+					}
+		    	}
+			
 	    	}
-	    	printf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
+	    	#printf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
+			$aLineResult=sprintf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
+			push @arrayResultQuery, $aLineResult;
 	    	$totalGeneral=$totalGeneral+$subtotalDelDia;
 		}
-		print "total general $totalGeneral\n\n\n";
+		#print "total general $totalGeneral\n\n\n";
+		$aLineResult="total general $totalGeneral\n\n\n";
+		push @arrayResultQuery, $aLineResult;
 	}
 }
 
@@ -736,7 +993,7 @@ sub getQueryEntidadesDestino()
 	-----------------------------------------------------------------------\n";
 	print "\tSELECCION ";
 	chomp($queryEntidadDestinoSelection = <>);
-
+	@arrayResultQuery=();
 	my @entidadesDestinoSel = split(' ',$queryEntidadDestinoSelection);
 	@entidadesDestinoAListar=();
 	foreach my $unaEntidadDestino (@entidadesDestinoSel)
@@ -745,31 +1002,56 @@ sub getQueryEntidadesDestino()
 		{
 			push @entidadesDestinoAListar, $unaEntidadDestino;
 		}
-
 	}
 
 	foreach my $unaEntidadDestinoAListar (@entidadesDestinoAListar)
 	{
-		print "ENTIDAD: $unaEntidadDestinoAListar\n";
+		#print "ENTIDAD: $unaEntidadDestinoAListar\n";
+		$aLineResult="ENTIDAD: $unaEntidadDestinoAListar\n";
+		push @arrayResultQuery, $aLineResult;
 		$totalGeneral=0;
 		foreach my $unaFechaDeTransferencia (sort keys %{$transferenciasDestinoFechaHash{$unaEntidadDestinoAListar}})
 		{
 			#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
 			$subtotalDelDia=0;
-			print "FECHA: $unaFechaDeTransferencia\n";
-			printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+			#print "FECHA: $unaFechaDeTransferencia\n";
+			$aLineResult="FECHA: $unaFechaDeTransferencia\n";
+			push @arrayResultQuery, $aLineResult;
+
+			#printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+
+			if($typeOfDetailSelection == 1)
+			{
+				$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+				push @arrayResultQuery, $aLineResult;
+			}
+			elsif($typeOfDetailSelection == 2)
+			{
+				$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
+				push @arrayResultQuery, $aLineResult;
+	    	}
+
 	    	foreach my $unaTransferencia (@{$transferenciasDestinoFechaHash{$unaEntidadDestinoAListar}{$unaFechaDeTransferencia}})
 	    	{
-	    		($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-	    		#if() VALIDACIONES DE FILTRO
-	    		$subtotalDelDia=$subtotalDelDia+$importe;
-	    		#print "$unaTransferencia\n";
-	    		printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+		    	#if() VALIDACIONES DE FILTRO
+		    	$subtotalDelDia=$subtotalDelDia+$importe;
+
+		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+				if($typeOfDetailSelection == 1)
+				{
+					$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+					push @arrayResultQuery, $aLineResult;
+				}	
 	    	}
-	    	printf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
+	    	#printf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
+			$aLineResult=sprintf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
+			push @arrayResultQuery, $aLineResult;
 	    	$totalGeneral=$totalGeneral+$subtotalDelDia;
 		}
-		print "total general $totalGeneral\n\n\n";
+		#print "total general $totalGeneral\n\n\n";
+		$aLineResult="total general $totalGeneral\n\n\n";
+		push @arrayResultQuery, $aLineResult;
 	}
 }
 
@@ -781,7 +1063,7 @@ sub getQueryBalancePorEntidad()
 	-----------------------------------------------------------------------\n";
 	print "\tSELECCION ";
 	chomp($queryBalancePorEntidadSelection = <>);
-
+	@arrayResultQuery=();
 	my @entidadesParaBalanceSel = split(' ',$queryBalancePorEntidadSelection);
 	@entidadesParaBalanceAListar=();
 	foreach my $unaEntidadParaBalance (@entidadesParaBalanceSel)
@@ -791,20 +1073,22 @@ sub getQueryBalancePorEntidad()
 
 	foreach my $unaEntidadParaBalanceAListar (@entidadesParaBalanceAListar)
 	{
-		print "ENTIDAD: $unaEntidadParaBalanceAListar\n";
+		#print "ENTIDAD: $unaEntidadParaBalanceAListar\n";
+		$aLineResult="ENTIDAD: $unaEntidadParaBalanceAListar\n";
+		push @arrayResultQuery, $aLineResult;
 		$totalDesde=0;
 		foreach my $unaEntidadDestino(sort keys %{$transferenciasOrigenDestinoHash{$unaEntidadParaBalanceAListar}}) 
 		{
 			$transferenciasDeUnaFecha =$transferenciasOrigenDestinoHash{$unaEntidadParaBalanceAListar}{$unaEntidadDestino};
 	    	foreach my $unaTransferencia (@transferenciasDeUnaFecha)
 	    	{
-	    		
-	    		($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-	    		#if() VALIDACIONES DE FILTRO
-	    		$totalDesde=$totalDesde+$importe;
-	    		
+		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+		    	#if() VALIDACIONES DE FILTRO
+		    	$totalDesde=$totalDesde+$importe;
 	    	}
-	    	printf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
+	    	#printf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
+	    	$aLineResult=sprintf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
+			push @arrayResultQuery, $aLineResult;
 		}
 
 		$totalHacia=0;
@@ -817,11 +1101,13 @@ sub getQueryBalancePorEntidad()
 					$transferenciasDeUnaFecha =$transferenciasOrigenDestinoHash{$unaEntidadOrigen}{$unaEntidadParaBalanceAListar};
 			    	foreach my $unaTransferencia (@transferenciasDeUnaFecha)
 			    	{
-			    		($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-			    		#if() VALIDACIONES DE FILTRO
-			    		$totalHacia=$totalHacia+$importe;
+				    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+				    	#if() VALIDACIONES DE FILTRO
+				    	$totalHacia=$totalHacia+$importe;
 			    	}
-			    	printf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
+			    	#printf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
+			    	$aLineResult=sprintf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
+					push @arrayResultQuery, $aLineResult;
 				}
 			}
 		}
@@ -834,7 +1120,9 @@ sub getQueryBalancePorEntidad()
 		{
 			$textoPosNeg ="NEGATIVO";
 		}
-		print "Balance $textoPosNeg para $unaEntidadParaBalanceAListar\n";
+		#print "Balance $textoPosNeg para $unaEntidadParaBalanceAListar\n";
+		$aLineResult="Balance $textoPosNeg para $unaEntidadParaBalanceAListar\n";
+		push @arrayResultQuery, $aLineResult;
 	}
 
 }
@@ -845,12 +1133,13 @@ sub getQueryBalanceEntreEntidades()
 	-----------------------------------------------------------------------\n";
 	print "\tSELECCION ";
 	chomp($queryEntidadOrigenDestinoSelection = <>);
+	@arrayResultQuery=();
 
 	my @entidadesOrigenDestinoSel = split(' ',$queryEntidadOrigenDestinoSelection);
 	@entidadesOrigenDestinoAListar=();
 	foreach my $unaEntidadParaBalanceConOtra (@entidadesOrigenDestinoSel)
 	{
-			push @entidadesOrigenDestinoAListar, $unaEntidadParaBalanceConOtra;
+		push @entidadesOrigenDestinoAListar, $unaEntidadParaBalanceConOtra;
 	}
 
 	$unaEntidadParaBalancearConOtra = $entidadesOrigenDestinoAListar[0];
@@ -859,21 +1148,38 @@ sub getQueryBalanceEntreEntidades()
 	{
 		#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
 		$subtotalDelDia=0;
-		printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+		if($typeOfDetailSelection == 1)
+		{
+			$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+			push @arrayResultQuery, $aLineResult;
+		}
+		elsif($typeOfDetailSelection == 2)
+		{
+			$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
+			push @arrayResultQuery, $aLineResult;
+    	}
+		
     	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$unaEntidadParaBalancearConOtra}{$unaFechaDeTransferencia}})
     	{
-    		($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-    		#if() VALIDACIONES DE FILTRO
-    		if($eDestino eq $entidadesOrigenDestinoAListar[1] )
-    		{
-    			$subtotalDelDia=$subtotalDelDia+$importe;
-    			#print "$unaTransferencia\n";
-    			printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-    		}
+	    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+	    	#if() VALIDACIONES DE FILTRO
+	    	if($eDestino eq $entidadesOrigenDestinoAListar[1] )
+	    	{
+		    	$subtotalDelDia=$subtotalDelDia+$importe;
+		    	#print "$unaTransferencia\n";
+		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+		    	if($typeOfDetailSelection == 1)
+				{
+					$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+					push @arrayResultQuery, $aLineResult;
+				}
+	    	}
 		}
     	$totalDesdeUnoOtro=$totalDesdeUnoOtro+$subtotalDelDia;
 	}
-	print "Desde $entidadesOrigenDestinoAListar[0] hacia $entidadesOrigenDestinoAListar[1] $totalDesdeUnoOtro\n\n";
+	#print "Desde $entidadesOrigenDestinoAListar[0] hacia $entidadesOrigenDestinoAListar[1] $totalDesdeUnoOtro\n\n";
+	$aLineResult="Desde $entidadesOrigenDestinoAListar[0] hacia $entidadesOrigenDestinoAListar[1] $totalDesdeUnoOtro\n\n";
+	push @arrayResultQuery, $aLineResult;
 
 	$otraEntidadParaBalancearConUna = $entidadesOrigenDestinoAListar[1];
 	$totalDesdeOtroUno=0;
@@ -881,21 +1187,40 @@ sub getQueryBalanceEntreEntidades()
 	{
 		#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
 		$subtotalDelDia=0;
-		printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+		#printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+
+		if($typeOfDetailSelection == 1)
+		{
+			$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+			push @arrayResultQuery, $aLineResult;
+		}
+		elsif($typeOfDetailSelection == 2)
+		{
+			$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
+			push @arrayResultQuery, $aLineResult;
+    	}
+
     	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$otraEntidadParaBalancearConUna}{$unaFechaDeTransferencia}})
     	{
-    		($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-    		#if() VALIDACIONES DE FILTRO
-    		if($eDestino eq $entidadesOrigenDestinoAListar[0] )
-    		{
-    			$subtotalDelDia=$subtotalDelDia+$importe;
-    			#print "$unaTransferencia\n";
-    			printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-    		}
+	    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+	    	#if() VALIDACIONES DE FILTRO
+	    	if($eDestino eq $entidadesOrigenDestinoAListar[0] )
+	    	{
+		    	$subtotalDelDia=$subtotalDelDia+$importe;
+		    	#print "$unaTransferencia\n";
+		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+		    	if($typeOfDetailSelection == 1)
+				{
+					$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+					push @arrayResultQuery, $aLineResult;
+				}
+	    	}
 		}
     	$totalDesdeOtroUno=$totalDesdeOtroUno+$subtotalDelDia;
 	}
-	print "Desde $entidadesOrigenDestinoAListar[1] hacia $entidadesOrigenDestinoAListar[0] $totalDesdeOtroUno\n\n";
+	#print "Desde $entidadesOrigenDestinoAListar[1] hacia $entidadesOrigenDestinoAListar[0] $totalDesdeOtroUno\n\n";
+	$aLineResult="Desde $entidadesOrigenDestinoAListar[1] hacia $entidadesOrigenDestinoAListar[0] $totalDesdeOtroUno\n\n";
+	push @arrayResultQuery, $aLineResult;
 
 
 	$total = $totalDesdeOtroUno - $totalDesdeUnoOtro;
@@ -907,7 +1232,108 @@ sub getQueryBalanceEntreEntidades()
 	{
 		$resBalance="POSITIVO";
 	}
-print "Balance $resBalance para $entidadesOrigenDestinoAListar[0] $total\n\n\n";
+	#print "Balance $resBalance para $entidadesOrigenDestinoAListar[0] $total\n\n\n";
+	$aLineResult="Balance $resBalance para $entidadesOrigenDestinoAListar[0] $total\n\n\n";
+	push @arrayResultQuery, $aLineResult;
+}
+
+
+sub getQueryPorCBU()
+{
+	print "\n\tINGRESE EL NUMERO DE CUENTA CBU
+	-----------------------------------------------------------------------\n";
+	print "\tSELECCION ";
+	chomp($queryCBUSelection = <>);
+	@arrayResultQuery=();
+	foreach my $unaFechaDeTransferencia (sort keys %cbuOrigenHash)
+	{
+		#printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","DESDE","HACIA");
+		$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","DESDE","HACIA");
+		push @arrayResultQuery, $aLineResult;
+		#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
+		$subtotalDelDiaOrigen=0;
+		if(exists $cbuOrigenHash{$unaFechaDeTransferencia}{$queryCBUSelection})
+		{
+	    	foreach my $unaTransferencia (@{$cbuOrigenHash{$unaFechaDeTransferencia}{$queryCBUSelection}})
+	    	{
+		    	($fuente, $eOrigen, $codOrizgen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+		    	#if() VALIDACIONES DE FILTRO
+		    	$subtotalDelDiaOrigen=$subtotalDelDiaOrigen+$importe;
+
+		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+		    	$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+				push @arrayResultQuery, $aLineResult;
+
+	    	}
+	    	#printf("%-15s %-15s\n"," ",$subtotalDelDiaOrigen);
+	    	$aLineResult=sprintf("%-15s %-15s\n"," ",$subtotalDelDiaOrigen);
+			push @arrayResultQuery, $aLineResul
+	    }
+
+		$subtotalDelDiaDestino=0;
+		if(exists $cbuDestinoHash{$unaFechaDeTransferencia}{$queryCBUSelection})
+		{
+	    	foreach my $unaTransferencia (@{$cbuDestinoHash{$unaFechaDeTransferencia}{$queryCBUSelection}})
+	    	{
+		    	($fuente, $eOrigen, $codOrizgen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+		    	#if() VALIDACIONES DE FILTRO
+		    	$subtotalDelDiaDestino=$subtotalDelDiaDestino+$importe;
+		    	
+		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+		    	$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+				push @arrayResultQuery, $aLineResult;
+	    	}
+	    	#printf("%-15s %-15s\n"," ",$subtotalDelDiaDestino);
+			$aLineResult=sprintf("%-15s %-15s\n"," ",$subtotalDelDiaDestino);
+			push @arrayResultQuery, $aLineResult;
+
+		}
+
+		if(exists $cbuOrigenHash{$unaFechaDeTransferencia}{$queryCBUSelection} or exists $cbuDestinoHash{$unaFechaDeTransferencia}{$queryCBUSelection})
+		{
+			$totalDelDia=$subtotalDelDiaDestino-$subtotalDelDiaOrigen;
+			if($totalDelDia >=0)
+			{
+				$textoPosNeg ="POSITIVO";
+			}
+			else
+			{
+				$textoPosNeg ="NEGATIVO";
+			}
+			#printf("%-15s %-15s %-15s %-15s\n","Balance $textoPosNeg",$totalDelDia,"para la cuenta",$queryCBUSelection);
+			$aLineResult=sprintf("%-15s %-15s %-15s %-15s\n","Balance $textoPosNeg",$totalDelDia,"para la cuenta",$queryCBUSelection);
+			push @arrayResultQuery, $aLineResult;
+		}
+	}
+}
+
+
+sub showRanking()
+{
+	@arrayResultQuery=();
+	my $i=0;
+	#sprintf("%-5s %-15s %-30s\n", "N","ENTIDAD","IMPORTE TOTAL RECIBIDO");
+	$aLineResult=sprintf("%-5s %-15s %-30s\n", "N","ENTIDAD","IMPORTE TOTAL RECIBIDO");
+	push @arrayResultQuery, $aLineResult;
+	foreach my $eDestino (sort { $rankingRecibieronHash{$b} <=> $rankingRecibieronHash{$a} } keys %rankingRecibieronHash) 
+	{
+	    #printf "%-5s %-15s %-30s\n",$i+1,$eDestino, $rankingRecibieronHash{$eDestino};
+	    $aLineResult=sprintf "%-5s %-15s %-30s\n",$i+1,$eDestino, $rankingRecibieronHash{$eDestino};
+		push @arrayResultQuery, $aLineResult;
+	    last if ($i++ == 2);   
+	}
+
+	$i=0;
+	#printf("%-5s %-15s %-30s\n", "N","ENTIDAD","IMPORTE TOTAL EMITIDO");
+	$aLineResult=sprintf("%-5s %-15s %-30s\n", "N","ENTIDAD","IMPORTE TOTAL EMITIDO");
+	push @arrayResultQuery, $aLineResult;
+	foreach my $eOrigen (sort { $rankingEmitieronHash{$b} <=> $rankingEmitieronHash{$a} } keys %rankingEmitieronHash) 
+	{
+	    #printf "%-5s %-15s %-30s\n",$i+1,$eOrigen, $rankingEmitieronHash{$eOrigen};
+	    $aLineResult=sprintf "%-5s %-15s %-30s\n",$i+1,$eOrigen, $rankingEmitieronHash{$eOrigen};
+		push @arrayResultQuery, $aLineResult;
+	    last if ($i++ == 2);
+	}
 
 }
 
@@ -920,21 +1346,34 @@ sub showQueryResult()
 		my $filename="";
 		if($typeOfListSelection == 1 or $typeOfListSelection == 2 or $typeOfListSelection == 5)
 		{
-			$filename = $listadosDir."unListado";	
+			unless(-e $listadosDir)
+			{
+			`mkdir -p $listadosDir`;
+			}
+
+			$filename = $listadosDir."unListado.".getNextListadoID();	
 		}
 		elsif($typeOfListSelection == 3 or $typeOfListSelection == 4)
 		{
-			$filename = $balancesDir."unBalance";	
+			unless(-e $balancesDir)
+			{
+			`mkdir -p $balancesDir`;
+			}
+			$filename = $balancesDir."unBalance.".getNextBalanceID();	
 		}
 		elsif($typeOfListSelection == 6)
 		{
-			$filename = $rankingDir."unRanking";
+			unless(-e $rankingDir)
+			{
+			`mkdir -p $rankingDir`;
+			}
+			$filename = $rankingDir."unRanking.".getNextRankingID();
 		}
 		open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
 		print $fh @sortedResult;
 		close $fh;
-print "\n\tSE GENERO EL ARCHIVO $filename
-	-----------------------------------------------------------------------\n";	
+	print "\n\tSE GENERO EL ARCHIVO $filename
+		-----------------------------------------------------------------------\n";	
 	}
 
 	if($typeOfOutputSelection == 1 or $typeOfOutputSelection == 3)
@@ -945,17 +1384,145 @@ print "\n\tSE GENERO EL ARCHIVO $filename
 
 
 
-
-####################################################################
-################## RANKING DE TRANSFERENCIAS #######################
-
-
-
-
-
-
 ##############################################################
 ########################## UTILS ############################
+
+#Devuelve el numero siguiente al número mayor del nombre de los archivos de listados creados.
+sub getNextListadoID()
+{
+	$lastId =0;
+	my $cantArchivos=0;
+	my @workFilesListado=();
+	opendir(DIR,$listadosDir);
+	my @filesOFTP = readdir(DIR);
+	closedir(DIR);
+	foreach(@filesOFTP)
+	{
+		my $aFile = $_;
+		if(length($aFile) >= 10)
+		{
+			$nombreListado = substr $file, 0, 9;
+			$nombrePunto = substr $file, 9,1;
+			if( $nombreListado == "unListado" and nombrePunto == ".")
+			{
+				push @workFilesListado, $aFile;
+				$cantArchivos=$cantArchivos+1;		
+			}
+		}
+	}
+	if ( $cantArchivos >0)
+	{
+		if( $cantArchivos -10 >= 0)
+		{
+			$lastId = "0".($cantArchivos);
+		}
+		elsif( $cantArchivos -100 >= 0)
+		{
+			$lastId = $cantArchivos;
+		}
+		else
+		{
+			$lastId = "00".($cantArchivos);
+		}
+	}
+	else
+	{
+		$lastId = "000";
+	}
+	return $lastId;
+}
+
+#Devuelve el numero siguiente al número mayor del nombre de los archivos de balance creados.
+sub getNextBalanceID()
+{
+	$lastId =0;
+	my $cantArchivos=0;
+	my @workFilesBalance=();
+	opendir(DIR,$balancesDir);
+	my @filesOFTP = readdir(DIR);
+	closedir(DIR);
+	foreach(@filesOFTP)
+	{
+		my $aFile = $_;
+		if(length($aFile) >= 10)
+		{
+			$nombreBalance = substr $file, 0, 9;
+			$nombrePunto = substr $file, 9,1;
+			if( $nombreBalance == "unBalance" and nombrePunto == ".")
+			{
+				push @workFilesBalance, $aFile;
+				$cantArchivos=$cantArchivos+1;		
+			}
+		}
+	}
+	if ( $cantArchivos >0)
+	{
+		if( $cantArchivos -10 >= 0)
+		{
+			$lastId = "0".($cantArchivos);
+		}
+		elsif( $cantArchivos -100 >= 0)
+		{
+			$lastId = $cantArchivos;
+		}
+		else
+		{
+			$lastId = "00".($cantArchivos);
+		}
+	}
+	else
+	{
+		$lastId = "000";
+	}
+	return $lastId;
+}
+
+#Devuelve el numero siguiente al número mayor del nombre de los archivos de ranking creados.
+sub getNextRankingID()
+{
+	$lastId =0;
+	my $cantArchivos=0;
+	my @workFilesRanking=();
+	opendir(DIR,$balancesDir);
+	my @filesOFTP = readdir(DIR);
+	closedir(DIR);
+	foreach(@filesOFTP)
+	{
+		my $aFile = $_;
+		if(length($aFile) >= 10)
+		{
+			$nombreRanking = substr $file, 0, 9;
+			$nombrePunto = substr $file, 9,1;
+			if( $nombreRanking == "unRanking" and nombrePunto == ".")
+			{
+				push @workFilesRanking, $aFile;
+				$cantArchivos=$cantArchivos+1;		
+			}
+		}
+	}
+	if ( $cantArchivos >0)
+	{
+		if( $cantArchivos -10 >= 0)
+		{
+			$lastId = "0".($cantArchivos);
+		}
+		elsif( $cantArchivos -100 >= 0)
+		{
+			$lastId = $cantArchivos;
+		}
+		else
+		{
+			$lastId = "00".($cantArchivos);
+		}
+	}
+	else
+	{
+		$lastId = "000";
+	}
+	return $lastId;
+}
+
+
 
 #Valido que la fecha sea del tipo AAAAMMDD
 sub validateDateFormat()
@@ -979,9 +1546,7 @@ sub validateDateFormat()
 	{
 		return 0;
 	}
-	
 	return 1;
-	
 }
 
 
@@ -995,8 +1560,6 @@ print "\n\t---------------------------------------------------------------------
 	SELECCION INCORRECTA - INTENTE NUEVAMENTE
 	-----------------------------------------------------------------------\n";
 }
-
-
 
 sub showErrorFormatDate()
 {
@@ -1020,19 +1583,19 @@ print "\n\t---------------------------------------------------------------------
 sub showHelpMenu()
 {
 # Imprime informacion de uso de la herramienta
-# Usage:	listarT.pl -<c|e|h|s|k|p|t>
+# Usage:	TRANSFERLIST.pl -<c|h>
 #	
 	print "\n\tPrograma: AFLIST.pl - Grupo 5 - GNU GPLv3
 	Descripcion: Genera reportes y rankings de transferencias entre entidades 
-	con la aplicación de distintos filtros.			 
+	con la aplicación de distintos filtros.	 
 	USAGE: TRANSFERLIST.pl -<h|c> 
 	-----------------------------------------------------------------------\n
 	-h : Imprime esta ayuda
 	-c : Realiza consulta sobre transferencias aplicando filtros
 	-----------------------------------------------------------------------\n
 	Ejemplo:
-		TRANSFERLIST.pl -h
-		TRANSFERLIST.pl -c
+	TRANSFERLIST.pl -h
+	TRANSFERLIST.pl -c
 	\n";
 	exit 0;
 
@@ -1051,5 +1614,3 @@ print "\n\t---------------------------------------------------------------------
 #main();
 parseConfig();
 parseArguments();
-
-
