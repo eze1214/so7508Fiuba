@@ -40,7 +40,7 @@ $filtroEntidadOrigenSelection = "*";
 $filtroEntidadDestinoSelection = "*";
 $filtroEstadoSelection = "*";
 $filtroFechasSelection = "*";
-$filtroImporteMinSelection = "0";
+$filtroImporteMinSelection = "-9999999999";
 $filtroImporteMaxSelection = "*";
 
 
@@ -79,12 +79,12 @@ sub parseArguments()
 		exit 1;
 	}
 
-	if($fileIn ==1)
+	if($fileIn == 1)
 	{
 		mainLoadFilteredTransfer();
 	}
 
-	if($fileIn <> 1 or $help <> 1)
+	if($fileIn != 1 or $help != 1)
 	{
 		showErrorSelection();
 		showHelpMenu();
@@ -347,7 +347,7 @@ sub blankAllQuerySelection()
 	$filtroEntidadDestinoSelection = "*";
 	$filtroEstadoSelection = "*";
 	$filtroFechasSelection[0] = "*";
-	$filtroImporteMinSelection = "0";
+	$filtroImporteMinSelection = "-9999999999";
 	$filtroImporteMaxSelection = "99999999";
 }
 
@@ -625,8 +625,11 @@ sub showEstadoFilterMenu()
 sub validarEstado
 {
 	my ($unEstado) = @_;
+	#print "#### validar Estado: ".$unEstado."\n";
+	#print "##### FiltroEstadSelection: ".$filtroEstadoSelection."\n";
 	if($filtroEstadoSelection eq '*')
 	{
+		#print "Entra porque la selection es * i\n ";
 		return 1;
 	}
 	else
@@ -731,7 +734,7 @@ print "\n\tTIPO DE FILTRO
 
 }
 
-sub validarFiltroFecha()
+sub validarFiltroFecha
 {
 
 	if($fechaTransfFilterType ==3)
@@ -792,14 +795,14 @@ print "\n\tINGRESE EL IMPORTE MINIMO (El mínimo es 0)
 	print "\tSELECCION ";
 	chomp($filtroImporteMinSelection = <>);
 	
-	if($filtroImporteMinSelection =~ /[0-9]/)
+	if($filtroImporteMinSelection =~ /-{0,1}[0-9]/)
 	{
 		showImporteMaxFilterMenu()
 	}
 	else
 	{
 		showErrorSelection();
-		$filtroImporteMinSelection = "0";
+		$filtroImporteMinSelection = "-9999999999";
 	}
 }
 
@@ -811,22 +814,23 @@ print "\n\tINGRESE EL IMPORTE MAXIMO
 	print "\tSELECCION ";
 	chomp($filtroImporteMaxSelection = <>);
 
-	if($filtroImporteMaxSelection =~ /[0-9]/)
-	{
+		if($filtroImporteMaxSelection =~ /[0-9]/)
+		{
 
-	}
-	else
-	{
-		showErrorSelection();
-		$filtroImporteMinSelection = "0";
-		$filtroImporteMaxSelection = "99999999";
+		}
+		else
+		{
+			showErrorSelection();
+			$filtroImporteMinSelection = "-99999999";
+			$filtroImporteMaxSelection = "99999999";
 	}
 }
 
 
-sub validarFiltroImporte()
+sub validarFiltroImporte
 {
 	my ($unImporte) = @_;
+	#print "Validar filtro importe -> Min: $filtroImporteMinSelection act: $unImporte ->Max: $filtroImporteMaxSelection \n";
 	if( $filtroImporteMinSelection <= $unImporte and $unImporte <= $filtroImporteMaxSelection )
 	{
 		return 1;
@@ -964,7 +968,7 @@ sub getQueryEntidadesOrigen()
 		    	{
 		    		$subtotalDelDia=$subtotalDelDia+$importe;
 
-			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+			    	#printf("%-15s %-15s %-15s %-15s %-15s Subtotal: %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino,$subtotalDelDia);
 								
 					if($typeOfDetailSelection == 1)
 					{
