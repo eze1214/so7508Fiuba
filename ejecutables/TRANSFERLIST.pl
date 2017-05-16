@@ -48,8 +48,8 @@ $filtroImporteMaxSelection = "*";
 # Seteo las variables en base a la informacion que brinda el entorno
 sub parseConfig{
 
-	$repoDir= "/home/ubuntu1610/grupo05/reportes";
-	#$repoDir=$ENV{REPORTESDIR};
+#	$repoDir= "/home/ubuntu1610/grupo05/reportes";
+	$repoDir=$ENV{REPORTESDIR};
 	#$repoDir= $ENV{"GRUPO5_REPORTESDIR"};#"/home/ubuntu1610/grupo05/reportes";
 
 	if($repoDir eq "")
@@ -310,12 +310,12 @@ sub fileMatchAnioMesFilter()
 		my $rangeAnio= substr $rangeOfaniomes[0], 0,4;
 		my $rangeMes = substr $rangeOfaniomes[0], 4,2;
 		my $rangeDia = substr $rangeOfaniomes[0], 6,2;
-		print "Fecha $aDate\n";
-		print "Anio $anio\n";
-		print "Mes $mes\n";
-		print "dia $dia\n";
-		print "RangeAnio $rangeAnio\n";
-		print "RangeMes $rangeMes\n\n";
+	#	print "Fecha $aDate\n";
+	#	print "Anio $anio\n";
+#		print "Mes $mes\n";
+#		print "dia $dia\n";
+#		print "RangeAnio $rangeAnio\n";
+#		print "RangeMes $rangeMes\n\n";
 
 		if($statFilterType ==1)
 		{	
@@ -1629,7 +1629,7 @@ sub showHelpMenu()
 # Imprime informacion de uso de la herramienta
 # Usage:	TRANSFERLIST.pl -<c|h>
 #	
-	print "\n\tPrograma: AFLIST.pl - Grupo 5 - GNU GPLv3
+	print "\n\tPrograma: TRANSFERLIST.pl - Grupo 5 - GNU GPLv3
 	Descripcion: Genera reportes y rankings de transferencias entre entidades 
 	con la aplicación de distintos filtros.	 
 	USAGE: TRANSFERLIST.pl -<h|c> 

@@ -1,4 +1,5 @@
 #!/bin/bash
+LOG_DAEMON="$LOG/daemon.log"
 
 
 configFile(){
@@ -48,6 +49,7 @@ setVariables(){
 
 startDaemon(){
     $BINARIOS/startd.sh    
+    $BINARIOS/log.sh -w "Comando Startd"  -m "Resultado: $?" -i $LOG_DAEMON
     # Intento eliminar el archivo temporal en el cual voy a guardar la pid del demonio
 #    rm /tmp/daemon.pid 2> /dev/null
 #    

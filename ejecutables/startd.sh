@@ -22,3 +22,4 @@ SERV=$(ps aux |grep ${SRV} | grep -v grep | awk '{print $2}')
 #PID=$(cat /tmp/daemon.pid)
 
 echo -e ".. Demonio Corriendo ..  PID: ${SERV}"
+exit 0
