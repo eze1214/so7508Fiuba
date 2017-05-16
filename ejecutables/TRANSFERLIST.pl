@@ -11,6 +11,7 @@ use Scalar::Util qw(looks_like_number);
 %cbuDestinoHash;
 %rankingRecibieronHash;
 %rankingEmitieronHash;
+%entidadesHash;
 
 
 @arrayResultQuery=();
@@ -47,8 +48,8 @@ $filtroImporteMaxSelection = "*";
 # Seteo las variables en base a la informacion que brinda el entorno
 sub parseConfig{
 
-	#$repoDir= "/home/ubuntu1610/grupo05/reportes";
-	$repoDir=$ENV{REPORTESDIR};
+	$repoDir= "/home/ubuntu1610/grupo05/reportes";
+	#$repoDir=$ENV{REPORTESDIR};
 	#$repoDir= $ENV{"GRUPO5_REPORTESDIR"};#"/home/ubuntu1610/grupo05/reportes";
 
 	if($repoDir eq "")
@@ -264,6 +265,16 @@ sub makeStatQuery()
 				{
 					$rankingEmitieronHash{$eOrigen}=0;
 				}
+
+				if(not exists $entidadesHash{$eOrigen})
+				{
+					$entidadesHash{$eOrigen}=0;
+				}
+				if(not exists $entidadesHash{$eDestino})
+				{
+					$entidadesHash{$eDestino}=0;
+				}
+
 
 				push @{$transferenciasOrigenDestinoHash{$eOrigen}{$eDestino}}, $line;
 				push @{$transferenciasOrigenFechaHash{$eOrigen}{$fechaTransf}}, $line;
@@ -934,6 +945,15 @@ sub getQueryEntidadesOrigen()
 		}
 	}
 
+	if($entidadesOrigenSel[0] eq '*')
+	{
+		foreach my $unaEntidadOrigen (sort keys %transferenciasOrigenFechaHash)
+		{
+			push @entidadesOrigenAListar, $unaEntidadOrigen;
+		}	
+	}
+
+
 	foreach my $unaEntidadOrigenAListar (@entidadesOrigenAListar)
 	{
 		#print "ENTIDAD: $unaEntidadOrigenAListar\n";
@@ -1009,6 +1029,16 @@ sub getQueryEntidadesDestino()
 		}
 	}
 
+	if($entidadesDestinoSel[0] eq '*')
+	{
+		foreach my $unaEntidadDestinoAListar (sort keys %transferenciasDestinoFechaHash)
+		{
+			push @entidadesDestinoAListar, $unaEntidadDestinoAListar;
+		}	
+	}
+
+
+
 	foreach my $unaEntidadDestinoAListar (@entidadesDestinoAListar)
 	{
 		#print "ENTIDAD: $unaEntidadDestinoAListar\n";
@@ -1075,6 +1105,15 @@ sub getQueryBalancePorEntidad()
 	{
 		push @entidadesParaBalanceAListar, $unaEntidadParaBalance;
 	}
+
+	if($entidadesParaBalanceSel[0] eq '*')
+	{
+		foreach my $unaEntidad (sort keys %entidadesHash)
+		{
+			push @entidadesParaBalanceAListar, $unaEntidad;
+		}	
+	}
+
 
 	foreach my $unaEntidadParaBalanceAListar (@entidadesParaBalanceAListar)
 	{
