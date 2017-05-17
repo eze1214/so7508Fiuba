@@ -1103,7 +1103,10 @@ sub getQueryBalancePorEntidad()
 	@entidadesParaBalanceAListar=();
 	foreach my $unaEntidadParaBalance (@entidadesParaBalanceSel)
 	{
-		push @entidadesParaBalanceAListar, $unaEntidadParaBalance;
+		if (exists $entidadesHash{$unaEntidadParaBalance})
+		{
+			push @entidadesParaBalanceAListar, $unaEntidadParaBalance;
+		}
 	}
 
 	if($entidadesParaBalanceSel[0] eq '*')
@@ -1123,39 +1126,41 @@ sub getQueryBalancePorEntidad()
 		$totalDesde=0;
 		foreach my $unaEntidadDestino(sort keys %{$transferenciasOrigenDestinoHash{$unaEntidadParaBalanceAListar}}) 
 		{
-			$transferenciasDeUnaFecha =$transferenciasOrigenDestinoHash{$unaEntidadParaBalanceAListar}{$unaEntidadDestino};
-	    	foreach my $unaTransferencia (@transferenciasDeUnaFecha)
+
+	    	foreach my $unaTransferencia (@{$transferenciasOrigenDestinoHash{$unaEntidadParaBalanceAListar}{$unaEntidadDestino}})
 	    	{
 		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
 		    	#if() VALIDACIONES DE FILTRO
+
 		    	$totalDesde=$totalDesde+$importe;
 	    	}
-	    	#printf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
-	    	$aLineResult=sprintf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
-			push @arrayResultQuery, $aLineResult;
 		}
+    	#printf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
+    	$aLineResult=sprintf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
+		push @arrayResultQuery, $aLineResult;
 
 		$totalHacia=0;
-	    foreach my $unaEntidadOrigen(sort keys %$transferenciasOrigenDestinoHash) 
+	    foreach my $unaEntidadOrigen(sort keys %transferenciasOrigenDestinoHash) 
 		{
 			foreach my $unaEntidadDestino (keys %{$transferenciasOrigenDestinoHash{$unaEntidadOrigen}}) 
 			{
 				if($unaEntidadParaBalanceAListar eq $unaEntidadDestino and $unaEntidadParaBalanceAListar ne $unaEntidadOrigen)
 				{
-					$transferenciasDeUnaFecha =$transferenciasOrigenDestinoHash{$unaEntidadOrigen}{$unaEntidadParaBalanceAListar};
-			    	foreach my $unaTransferencia (@transferenciasDeUnaFecha)
+			    	foreach my $unaTransferencia (@{$transferenciasOrigenDestinoHash{$unaEntidadOrigen}{$unaEntidadParaBalanceAListar}})
 			    	{
 				    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
 				    	#if() VALIDACIONES DE FILTRO
+				    	
 				    	$totalHacia=$totalHacia+$importe;
 			    	}
-			    	#printf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
-			    	$aLineResult=sprintf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
-					push @arrayResultQuery, $aLineResult;
 				}
 			}
 		}
-	
+    	#printf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
+    	$aLineResult=sprintf("%-30s %-15s %-15s\n","Hacia $codDestino",$totalHacia,"hacia otras entidades");
+		push @arrayResultQuery, $aLineResult;
+
+		$totalGeneral=$totalHacia - $totalDesde;
 		if($totalGeneral >=0)
 		{
 			$textoPosNeg ="POSITIVO";
@@ -1165,7 +1170,7 @@ sub getQueryBalancePorEntidad()
 			$textoPosNeg ="NEGATIVO";
 		}
 		#print "Balance $textoPosNeg para $unaEntidadParaBalanceAListar\n";
-		$aLineResult="Balance $textoPosNeg para $unaEntidadParaBalanceAListar\n";
+		$aLineResult="Balance $textoPosNeg para $unaEntidadParaBalanceAListar $totalGeneral\n";
 		push @arrayResultQuery, $aLineResult;
 	}
 
@@ -1188,20 +1193,23 @@ sub getQueryBalanceEntreEntidades()
 
 	$unaEntidadParaBalancearConOtra = $entidadesOrigenDestinoAListar[0];
 	$totalDesdeUnoOtro=0;
+
+	if($typeOfDetailSelection == 1)
+	{
+		$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
+		push @arrayResultQuery, $aLineResult;
+	}
+	elsif($typeOfDetailSelection == 2)
+	{
+		$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
+		push @arrayResultQuery, $aLineResult;
+	}
+
 	foreach my $unaFechaDeTransferencia (sort keys %{$transferenciasOrigenFechaHash{$unaEntidadParaBalancearConOtra}})
 	{
 		#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
 		$subtotalDelDia=0;
-		if($typeOfDetailSelection == 1)
-		{
-			$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
-			push @arrayResultQuery, $aLineResult;
-		}
-		elsif($typeOfDetailSelection == 2)
-		{
-			$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
-			push @arrayResultQuery, $aLineResult;
-    	}
+
 		
     	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$unaEntidadParaBalancearConOtra}{$unaFechaDeTransferencia}})
     	{
@@ -1232,17 +1240,6 @@ sub getQueryBalanceEntreEntidades()
 		#@transferenciasDeUnaFecha =@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}};
 		$subtotalDelDia=0;
 		#printf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
-
-		if($typeOfDetailSelection == 1)
-		{
-			$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-15s\n", "FECHA","IMPORTE","ESTADO","ORIGEN","DESTINO");
-			push @arrayResultQuery, $aLineResult;
-		}
-		elsif($typeOfDetailSelection == 2)
-		{
-			$aLineResult=sprintf("%-15s %-15s\n", "FECHA","IMPORTE");
-			push @arrayResultQuery, $aLineResult;
-    	}
 
     	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$otraEntidadParaBalancearConUna}{$unaFechaDeTransferencia}})
     	{
