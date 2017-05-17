@@ -48,8 +48,8 @@ $filtroImporteMaxSelection = "*";
 # Seteo las variables en base a la informacion que brinda el entorno
 sub parseConfig{
 
-#	$repoDir= "/home/ubuntu1610/grupo05/reportes";
-	$repoDir=$ENV{REPORTESDIR};
+	$repoDir= "/home/ubuntu1610/grupo05/reportes";
+	#$repoDir=$ENV{REPORTESDIR};
 	#$repoDir= $ENV{"GRUPO5_REPORTESDIR"};#"/home/ubuntu1610/grupo05/reportes";
 
 	if($repoDir eq "")
@@ -502,6 +502,7 @@ sub validarFuente
 				$i++;
 			}
 		}
+
 		return 0;
 	}
 }
@@ -570,7 +571,7 @@ sub showEntidadDestinoFilterMenu()
 	@entidadesDestinoValidadas=();
 	foreach my $unaEntidadDestino (@entidadesDestinoSel)
 	{
-	push @entidadesDestinoValidadas, $unaEntidadDestino;	
+		push @entidadesDestinoValidadas, $unaEntidadDestino;	
 	}
 
 	if(scalar(@entidadesDestinoValidadas) == 0)
@@ -763,12 +764,7 @@ sub validarFiltroFecha
 		my $rangeAnio= substr $fechasTransfValidados[0], 0,4;
 		my $rangeMes = substr $fechasTransfValidados[0], 4,2;
 		my $rangeDia = substr $fechasTransfValidados[0], 6,2;
-		print "Fecha $aDate\n";
-		print "Anio $anio\n";
-		print "Mes $mes\n";
-		print "dia $dia\n";
-		print "RangeAnio $rangeAnio\n";
-		print "RangeMes $rangeMes\n\n";
+
 
 		if($fechaTransfFilterType ==1)
 		{	
@@ -984,6 +980,7 @@ sub getQueryEntidadesOrigen()
 	    	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$unaEntidadOrigenAListar}{$unaFechaDeTransferencia}})
 	    	{
 		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
+
 		    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
 		    	{
 		    		$subtotalDelDia=$subtotalDelDia+$importe;
@@ -1069,15 +1066,18 @@ sub getQueryEntidadesDestino()
 	    	foreach my $unaTransferencia (@{$transferenciasDestinoFechaHash{$unaEntidadDestinoAListar}{$unaFechaDeTransferencia}})
 	    	{
 		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-		    	#if() VALIDACIONES DE FILTRO
-		    	$subtotalDelDia=$subtotalDelDia+$importe;
 
-		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-				if($typeOfDetailSelection == 1)
-				{
-					$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-					push @arrayResultQuery, $aLineResult;
-				}	
+		    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
+		    	{
+			    	$subtotalDelDia=$subtotalDelDia+$importe;
+
+			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+					if($typeOfDetailSelection == 1)
+					{
+						$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+						push @arrayResultQuery, $aLineResult;
+					}	
+				}
 	    	}
 	    	#printf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
 			$aLineResult=sprintf("%-15s %-15s\n\n","subtotal",$subtotalDelDia);
@@ -1130,9 +1130,10 @@ sub getQueryBalancePorEntidad()
 	    	foreach my $unaTransferencia (@{$transferenciasOrigenDestinoHash{$unaEntidadParaBalanceAListar}{$unaEntidadDestino}})
 	    	{
 		    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-		    	#if() VALIDACIONES DE FILTRO
-
-		    	$totalDesde=$totalDesde+$importe;
+		    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
+		    	{
+		    		$totalDesde=$totalDesde+$importe;		    		
+		    	}
 	    	}
 		}
     	#printf("%-30s %-15s %-15s\n","Desde $codOrigen",$totalDesde,"hacia otras entidades");
@@ -1149,9 +1150,11 @@ sub getQueryBalancePorEntidad()
 			    	foreach my $unaTransferencia (@{$transferenciasOrigenDestinoHash{$unaEntidadOrigen}{$unaEntidadParaBalanceAListar}})
 			    	{
 				    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-				    	#if() VALIDACIONES DE FILTRO
-				    	
-				    	$totalHacia=$totalHacia+$importe;
+
+				    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
+				    	{
+					    	$totalHacia=$totalHacia+$importe;		    		
+				    	}
 			    	}
 				}
 			}
@@ -1214,18 +1217,21 @@ sub getQueryBalanceEntreEntidades()
     	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$unaEntidadParaBalancearConOtra}{$unaFechaDeTransferencia}})
     	{
 	    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-	    	#if() VALIDACIONES DE FILTRO
-	    	if($eDestino eq $entidadesOrigenDestinoAListar[1] )
+
+	    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
 	    	{
-		    	$subtotalDelDia=$subtotalDelDia+$importe;
-		    	#print "$unaTransferencia\n";
-		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-		    	if($typeOfDetailSelection == 1)
-				{
-					$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-					push @arrayResultQuery, $aLineResult;
-				}
-	    	}
+		    	if($eDestino eq $entidadesOrigenDestinoAListar[1] )
+		    	{
+			    	$subtotalDelDia=$subtotalDelDia+$importe;
+			    	#print "$unaTransferencia\n";
+			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+			    	if($typeOfDetailSelection == 1)
+					{
+						$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+						push @arrayResultQuery, $aLineResult;
+					}
+		    	}
+		    }
 		}
     	$totalDesdeUnoOtro=$totalDesdeUnoOtro+$subtotalDelDia;
 	}
@@ -1244,18 +1250,21 @@ sub getQueryBalanceEntreEntidades()
     	foreach my $unaTransferencia (@{$transferenciasOrigenFechaHash{$otraEntidadParaBalancearConUna}{$unaFechaDeTransferencia}})
     	{
 	    	($fuente, $eOrigen, $codOrigen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-	    	#if() VALIDACIONES DE FILTRO
-	    	if($eDestino eq $entidadesOrigenDestinoAListar[0] )
+
+	    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
 	    	{
-		    	$subtotalDelDia=$subtotalDelDia+$importe;
-		    	#print "$unaTransferencia\n";
-		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-		    	if($typeOfDetailSelection == 1)
-				{
-					$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-					push @arrayResultQuery, $aLineResult;
-				}
-	    	}
+		    	if($eDestino eq $entidadesOrigenDestinoAListar[0] )
+		    	{
+			    	$subtotalDelDia=$subtotalDelDia+$importe;
+			    	#print "$unaTransferencia\n";
+			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+			    	if($typeOfDetailSelection == 1)
+					{
+						$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+						push @arrayResultQuery, $aLineResult;
+					}
+		    	}
+		    }
 		}
     	$totalDesdeOtroUno=$totalDesdeOtroUno+$subtotalDelDia;
 	}
@@ -1298,12 +1307,14 @@ sub getQueryPorCBU()
 	    	foreach my $unaTransferencia (@{$cbuOrigenHash{$unaFechaDeTransferencia}{$queryCBUSelection}})
 	    	{
 		    	($fuente, $eOrigen, $codOrizgen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-		    	#if() VALIDACIONES DE FILTRO
-		    	$subtotalDelDiaOrigen=$subtotalDelDiaOrigen+$importe;
+		    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
+		    	{
+			    	$subtotalDelDiaOrigen=$subtotalDelDiaOrigen+$importe;
 
-		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-		    	$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-				push @arrayResultQuery, $aLineResult;
+			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+			    	$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+					push @arrayResultQuery, $aLineResult;
+				}
 
 	    	}
 	    	#printf("%-15s %-15s\n"," ",$subtotalDelDiaOrigen);
@@ -1317,12 +1328,14 @@ sub getQueryPorCBU()
 	    	foreach my $unaTransferencia (@{$cbuDestinoHash{$unaFechaDeTransferencia}{$queryCBUSelection}})
 	    	{
 		    	($fuente, $eOrigen, $codOrizgen, $eDestino,$codDestino,$fechaTransf,$importe,$estado,$cbuOrigen,$cbuDestino) = split(";", $unaTransferencia);
-		    	#if() VALIDACIONES DE FILTRO
-		    	$subtotalDelDiaDestino=$subtotalDelDiaDestino+$importe;
-		    	
-		    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-		    	$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
-				push @arrayResultQuery, $aLineResult;
+		    	if(validarFuente($fuente) and validarEntidadOrigen($eOrigen) and validarEntidadDestino($eDestino) and validarEstado($estado) and validarFiltroFecha($fechaTransf) and validarFiltroImporte($importe))
+		    	{
+			    	$subtotalDelDiaDestino=$subtotalDelDiaDestino+$importe;
+			    	
+			    	#printf("%-15s %-15s %-15s %-15s %-15s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+			    	$aLineResult=sprintf("%-15s %-15s %-15s %-15s %-s",$unaFechaDeTransferencia,$importe,$estado,$cbuOrigen,$cbuDestino);
+					push @arrayResultQuery, $aLineResult;
+				}
 	    	}
 	    	#printf("%-15s %-15s\n"," ",$subtotalDelDiaDestino);
 			$aLineResult=sprintf("%-15s %-15s\n"," ",$subtotalDelDiaDestino);
