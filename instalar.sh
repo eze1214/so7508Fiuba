@@ -60,8 +60,6 @@ copiarArchivos (){
 				cp "$fileOrig" "$GRUPO/$NOVEDADES"
 				echo "Instalado $fileOrig en $GRUPO/$NOVEDADES"
 				./log.sh -w INSTALADOR -m "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES" -i $ARCH_LOG
-				else
-				echo "todos putos"
 			fi
 		done
 		echo "-----------------------------------------"

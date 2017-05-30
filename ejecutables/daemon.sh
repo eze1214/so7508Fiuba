@@ -28,7 +28,7 @@ validateFilename(){
       return 2
     fi
   else
-    $BINARIOS/log.sh -w "Validar Nombre Archivo"  -m "Nombre de archivo inválido: $entry " -e $LOG_DAEMON
+    $BINARIOS/log.sh -w "Validar Nombre Archivo"  -m "Nombre de archivo inválido: $filename" -e $LOG_DAEMON
     return 3
   fi
   return 0
