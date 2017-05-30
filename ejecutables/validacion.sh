@@ -204,8 +204,12 @@ parsear(){
 }
 
 parsearHeader(){
+  $BINARIOS/log.sh -w "VALIDADOR"  -m "REGISTRO $REGISTRO " -i $LOG_VALIDADOR
+
   TOTAL_REGISTROS=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*$)/\1/" | sed "s/;//g" )
-  TOTAL_MONTO=$(echo "$REGISTRO"| sed -r "s/(.*;)(.*$)/\2/" | sed "s/;//g" | sed "s/,/\./" |  sed  -r "s/(.+\.)(..)(.*)/\1\2/" | bc) 
+  TOTAL_MONTO=$(echo "$REGISTRO" | cut -d ";" -f 2 | sed "s/^\([0-9]*\)[,.]\([0-9]*\).*$/\1.\2/g" | bc)
+  $BINARIOS/log.sh -w "VALIDADOR"  -m "TOTAL REGISTRO $TOTAL_REGISTROS " -i $LOG_VALIDADOR
+  $BINARIOS/log.sh -w "VALIDADOR"  -m "TOTAL MONTO $TOTAL_MONTO " -i $LOG_VALIDADOR
 }
 
 verificarExistenciaArchivo(){
@@ -239,6 +243,7 @@ generarSalida(){
       registroGuardar=$(echo "$archivo;$ORIGEN_BUSCADO;$COD_CBU_ORIGEN;$DESTINO_BUSCADO;$COD_CBU_DESTINO;$FECHA;$MONTO;$ESTADO;$COD_CBU_ORIGEN;$COD_CBU_DESTINO")
       echo "guardado $registroGuardar" >/dev/null
       if [ -f "$REPORTESDIR/transfer/$FECHA.txt" ];then
+
         touch $REPORTESDIR/transfer/$FECHA.txt
       fi
       echo "$registroGuardar" >>$REPORTESDIR/transfer/$FECHA.txt
@@ -276,8 +281,11 @@ validarArchivo(){
     
   done <"$archivo"
   echo "el monto sumados es $SUMA" >/dev/null
+  $BINARIOS/log.sh -w "VALIDADOR"  -m "Sumatoria: $SUMA. Monto informado: $TOTAL_MONTO." -i $LOG_VALIDADOR
   echo "la cantidad de registros sumados $CONTADOR" >/dev/null
-  if [ $SUMA != $TOTAL_MONTO ]; then
+  $EVALUACION=$(echo "$SUMA != $HEADER_TOTAL_MONTO" | bc)
+  $BINARIOS/log.sh -w "VALIDADOR"  -m "EVALUACION: $EVALUACION." -i $LOG_VALIDADOR
+  if [ "$SUMA" != "$HEADER_MONTO_TOTAL" ] ; then
     VALIDO="false"
     $BINARIOS/log.sh -w "VALIDADOR"  -m "Error en hash total. Sumatoria: $SUMA. Monto informado: $HEADER_MONTO_TOTAL." -e $LOG_VALIDADOR
   fi
