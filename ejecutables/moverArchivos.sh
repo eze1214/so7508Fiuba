@@ -25,7 +25,7 @@ DUPLICADOS="duplicados"
 # realizar la copia del archivo 
 copy(){
     local destPath=$1
-    cp $sourceFilePath $destPath 2> /dev/null 
+    cp "$sourceFilePath" "$destPath" 2> /dev/null 
     
 }
 
@@ -36,7 +36,7 @@ nextDupFileSeq(){
     local pattern="${name}_"
     
     # obtengo los archivos que cumplen con el patron y me quedo con el primero    
-    lastDupFilename=$( ls  -r $dupDirPath | awk  -v pattern=$pattern ' $0 ~ pattern {print}' | tr '\n' ',' | cut -d"," -f 1)   
+    lastDupFilename="$( ls  -r \"$dupDirPath\" | awk  -v pattern=\"$pattern\"' \"$0\" ~ pattern {print}' | tr '\n' ',' | cut -d\",\" -f 1)"
     
     ## No encuentra el patrón buscado
     if [ -z "$lastDupFilename" ]; then 
@@ -45,18 +45,18 @@ nextDupFileSeq(){
     
     ## Encuentra el patrón => genera un número más del ultimo encontrado
     # Quitar path nombre hasta "_"
-    local nextFilenameSeq=${lastDupFilename##*_}
+    local nextFilenameSeq="${lastDupFilename##*_}"
     # quitar extension a lo que quedá y así obtener número de secuencia 
-    nextFilenameSeq=${nextFilenameSeq%.*}   
+    nextFilenameSeq="${nextFilenameSeq%.*}"
     
-    if [ -z  $nextFilenameSeq ]; then 
+    if [ -z  "$nextFilenameSeq" ]; then 
         nextFilenameSeq=0
     fi
     
     # Sumar uno al valor encontrado 
     nextFilenameSeq=`expr $nextFilenameSeq + 1`
     
-    return $nextFilenameSeq
+    return "$nextFilenameSeq"
 }
 
 
@@ -64,10 +64,10 @@ dupFile() {
     # Genero la carpeta duplicados si no existe
     dupDirPath="$destPath/$DUPLICADOS"
     
-    if [ ! -d $dupDirPath ]; then 
-        mkdir $dupDirPath
+    if [ ! -d "$dupDirPath" ]; then 
+        mkdir "$dupDirPath"
         
-        if [ ! -d $dupDirPath ]; then 
+        if [ ! -d "$dupDirPath" ]; then 
             exit 4
         fi
     fi 
@@ -76,8 +76,8 @@ dupFile() {
     local sequence=$?
     local newName="$name""_$sequence$extension"
        
-    dupFileDestPath=$dupDirPath/$newName 
-    copy $dupFileDestPath
+    dupFileDestPath="$dupDirPath/$newName"
+    copy "$dupFileDestPath"
 }
 
 
@@ -99,13 +99,13 @@ destPath="$2"
 
 
 # El origen debe ser un archivo 
-if [ ! -f $sourceFilePath ]; then 
+if [ ! -f "$sourceFilePath" ]; then 
     echo "Error! La ruta de origen debe ser un archivo" >&2
     exit 2
 fi
 
 # El destino debe ser una carpeta
-if [ ! -d $destPath ]; then 
+if [ ! -d "$destPath" ]; then 
     echo "Error! La ruta de destino debe ser un directorio" >&2
     exit 3
 fi
@@ -113,9 +113,9 @@ fi
 # Obtengo el nombre del archivo
 filename=$(echo "$sourceFilePath" | sed 's/.*\///')
 # Obtengo el nombresin extensión
-name=${filename%.*} 
+name="${filename%.*}" 
 # Ontengo la extensión
-extension=${filename##*.} 
+extension="${filename##*.}"
 
 if [ "$extension" = "$name" ]; then 
     extension=""
@@ -123,21 +123,21 @@ else
     extension=".$extension"
 fi
 # Armo la ruta de destino del archivo, si no tuviera duplicados
-dupFileDestPath=$destPath/$filename 
+dupFileDestPath="$destPath/$filename"
 
 # si ese archivo ya existe, entonces es un duplicado, sino lo copio
-if [ -f $dupFileDestPath ]; then
+if [ -f "$dupFileDestPath" ]; then
     dupFile
 else
-    copy $dupFileDestPath
+    copy "$dupFileDestPath"
 fi
 
 # si no se realizo la copia => error 5    
-if [ ! -f $dupFileDestPath ]; then 
+if [ ! -f "$dupFileDestPath" ]; then 
     exit 5
 fi
 
-rm $sourceFilePath
+rm "$sourceFilePath"
     
 exit 0
 
