@@ -1,4 +1,4 @@
-	#!/bin/bash
+#!/bin/bash
 
 GRUPO=~/grupo05
 CONFG="$GRUPO/dirconf/config.cnf"
@@ -52,11 +52,17 @@ copiarArchivos (){
 		echo -e "\nCopiando Archivos de Novedades"
 		echo "-----------------------------------------"
 		./log.sh -w INSTALADOR -m "Copiando Archivos de novedades" -i $ARCH_LOG
-		for archivoNovedades in ${totalArchivosNovedades[*]}
+		for archivoNovedades in $(pwd)/novedades/*
 		do
-			cp "$(pwd)/novedades/$archivoNovedades" "$GRUPO/$NOVEDADES"
-			echo "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES"
-			./log.sh -w INSTALADOR -m "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES" -i $ARCH_LOG	
+			if [ -f "$archivoNovedades" ] 
+				then
+				fileOrig="$archivoNovedades"
+				cp "$fileOrig" "$GRUPO/$NOVEDADES"
+				echo "Instalado $fileOrig en $GRUPO/$NOVEDADES"
+				./log.sh -w INSTALADOR -m "Instalado $(pwd)/novedades/$archivoNovedades en $GRUPO/$NOVEDADES" -i $ARCH_LOG
+				else
+				echo "todos putos"
+			fi
 		done
 		echo "-----------------------------------------"
 	fi

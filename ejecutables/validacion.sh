@@ -260,7 +260,8 @@ validarArchivo(){
   SUMA=0
   CONTADOR=0
   $BINARIOS/log.sh -w "VALIDADOR"  -m "Archivo Leido: $archivo" -i $LOG_VALIDADOR
-
+	
+  verificarExistenciaArchivo
   while read REGISTRO; do
     if [ $HEADER = "false" ]; then 
       parsearHeader
@@ -312,7 +313,7 @@ validarArchivo(){
 }
 
     verificarAmbiente
-    verificarExistenciaArchivo
+
 
     list="$(find $ACEPTADOS -type f)"
     for file in $list
