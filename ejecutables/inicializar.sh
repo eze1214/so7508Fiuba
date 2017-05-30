@@ -1,5 +1,4 @@
 #!/bin/bash
-LOG_DAEMON="$LOG/daemon.log"
 
 
 configFile(){
@@ -44,12 +43,24 @@ setVariables(){
     export MAESTRO_DE_BANCOS="maestro_de_bancos.csv"
     echo -e ".... Estableciendo la variable MAESTRO_DE_BANCOS: $GRUPO5_MAESTRO_DE_BANCOS "
     
+    LOG_INIC="$LOG/inic.log"
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable GRUPO: $GRUPO " -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable BINARIOS: $BINARIOS" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable MAESTROS: $MAESTROS" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable NOVEDADES: $NOVEDADES" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable ACEPTADOS: $ACEPTADOS" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable RECHAZADOS: $RECHAZADOS" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable VALIDADOSDIR: $VALIDADOSDIR" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Etableciendo la variable REPORTEDIR: $REPORTESDIR" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable LOG: $LOG" -i $LOG_INIC
+    $BINARIOS/log.sh -w "Variables Ambiente"  -m "Estableciendo la variable MAESTRO_DE_BANCOS: $GRUPO5_MAESTRO_DE_BANCOS" -i $LOG_INIC
+
 }
 
 
 startDaemon(){
     $BINARIOS/startd.sh    
-    $BINARIOS/log.sh -w "Comando Startd"  -m "Resultado: $?" -i $LOG_DAEMON
+    $BINARIOS/log.sh -w "Comando Startd"  -m "Resultado: $?" -i $LOG_INIC
     # Intento eliminar el archivo temporal en el cual voy a guardar la pid del demonio
 #    rm /tmp/daemon.pid 2> /dev/null
 #    
@@ -87,6 +98,7 @@ default(){
         read -p "Desea iniciar el demonio ahora?(S/N): " rp
     done
 
+    $BINARIOS/log.sh -w "Inicio Demonio"  -m "Desea iniciar el demonio ahora?(S/N): $rp " -i $LOG_INIC
     if [ $rp = "s" ] || [ $rp = "S" ]; then
         startDaemon
     else
@@ -106,6 +118,7 @@ inicializarSistema(){
 
     echo -e "..Estableciendo permisos "
     source $BINARIOS/permisos.sh
+    $BINARIOS/log.sh -w "Permisos"  -m "Estableciendo Permisos " -i $LOG_INIC
 }
 
 
@@ -122,15 +135,18 @@ fi
 
 if [ $# = 0 ]; then 
     inicializarSistema
+    $BINARIOS/log.sh -w "Parámetros"  -m "Sin parámetros ingresados " -i $LOG_INIC
     default
 elif [ $1 == "-d" ]; then
     inicializarSistema
+    $BINARIOS/log.sh -w "Parámetros"  -m "Parámetro ingresado \"-d\" - Inicia demonio por default " -i $LOG_INIC
     startDaemon
 elif [ $1 == "-h" ]; then
     showHelp
 else
     echo -e "Parámetro ingresado inexistente"
     inicializarSistema 
+    $BINARIOS/log.sh -w "Parámetros"  -m "Parámetro ingresado inexistente" -i $LOG_INIC
     default 
 fi
 
